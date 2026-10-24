@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RedeemStore - Buy & Book Redeem Codes</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Firebase Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Razorpay Checkout -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  
+  <style>
+    body {
+      background: radial-gradient(circle at top left, #1e1b4b, #0f172a, #020617);
+      min-height: 100vh;
+      color: #f8fafc;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+    .glass-btn {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.7), rgba(168, 85, 247, 0.7));
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .glass-btn:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(168, 85, 247, 0.9));
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+    }
+  </style>
+</head>
+<body class="font-sans antialiased">
+
+  <!-- Navbar -->
+  <nav class="glass-card sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-white/10">
+    <div class="flex items-center space-x-3">
+      <i class="fa-solid fa-bolt text-indigo-400 text-2xl animate-pulse"></i>
+      <span class="text-2xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">
+        RedeemZone
+      </span>
+    </div>
+    
+    <div id="authSection" class="flex items-center space-x-4">
+      <button id="googleLoginBtn" class="glass-btn px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all">
+        <i class="fa-brands fa-google text-red-400"></i>
+        <span>Continue with Google</span>
+      </button>
+
+      <div id="userInfo" class="hidden flex items-center space-x-3">
+        <img id="userAvatar" src="" class="w-9 h-9 rounded-full border border-indigo-400" alt="Avatar">
+        <div class="text-left hidden sm:block">
+          <p id="userName" class="text-sm font-medium leading-none"></p>
+          <span id="userEmail" class="text-xs text-gray-400"></span>
+        </div>
+        <button id="logoutBtn" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 p-2 rounded-lg text-xs border border-red-500/30 transition">
+          <i class="fa-solid fa-power-off"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="max-w-6xl mx-auto px-6 pt-12 pb-6 text-center">
+    <h1 class="text-4xl sm:text-5xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-indigo-200 to-purple-400">
+      Instant & Pre-Book Redeem Codes
+    </h1>
+    <p class="text-gray-400 max-w-xl mx-auto text-sm sm:text-base">
+      Turant code kharidein ya apni requirement ke hisab se pre-order karein. Safe, secure & trusted delivery.
+    </p>
+
+    <!-- Navigation Tabs -->
+    <div class="flex justify-center mt-8 space-x-4">
+      <button onclick="switchTab('instantTab')" id="tabBtnInstant" class="glass-btn px-6 py-2.5 rounded-xl font-medium text-sm transition">
+        <i class="fa-solid fa-gift mr-2"></i> Instant Buy Codes
+      </button>
+      <button onclick="switchTab('bookingTab')" id="tabBtnBooking" class="bg-white/5 hover:bg-white/10 px-6 py-2.5 rounded-xl font-medium text-sm border border-white/10 transition">
+        <i class="fa-solid fa-clock mr-2"></i> Custom Booking
+      </button>
+      <button onclick="switchTab('ordersTab')" id="tabBtnOrders" class="bg-white/5 hover:bg-white/10 px-6 py-2.5 rounded-xl font-medium text-sm border border-white/10 transition">
+        <i class="fa-solid fa-receipt mr-2"></i> My Purchases
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-6xl mx-auto px-6 py-6 pb-20">
+
+    <!-- 1. Instant Buy Codes Section -->
+    <section id="instantTab" class="tab-content">
+      <h2 class="text-xl font-bold mb-6 flex items-center space-x-2 text-indigo-300">
+        <i class="fa-solid fa-fire text-orange-400"></i>
+        <span>Available Codes In Stock</span>
+      </h2>
+      <div id="codesContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div class="glass-card p-6 rounded-2xl text-center text-gray-400 col-span-full">
+          <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-indigo-400"></i>
+          <p>Available codes load ho rahe hain...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Custom Booking Section -->
+    <section id="bookingTab" class="tab-content hidden">
+      <div class="max-w-xl mx-auto glass-card p-8 rounded-2xl">
+        <h2 class="text-2xl font-bold mb-2 text-purple-300 flex items-center space-x-2">
+          <i class="fa-solid fa-calendar-check"></i>
+          <span>Custom Code Booking</span>
+        </h2>
+        <p class="text-xs text-gray-400 mb-6">Agar instant stock me code nahi hai to yahan se book karein, admin aapko send karega.</p>
+
+        <form id="bookingForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Redeem Code Amount (Kitne wala code chahiye?)</label>
+            <select id="bookAmount" class="w-full bg-slate-900/60 border border-white/20 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-400" required>
+              <option value="50">₹50 Code</option>
+              <option value="100">₹100 Code</option>
+              <option value="250">₹250 Code</option>
+              <option value="500">₹500 Code</option>
+              <option value="800">₹800 Code</option>
+              <option value="1000">₹1000 Code</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Quantity (Kitne codes)</label>
+            <input type="number" id="bookQty" min="1" max="10" value="1" class="w-full bg-slate-900/60 border border-white/20 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-400" required>
+          </div>
+
+          <div class="glass-card p-4 rounded-xl border border-indigo-500/20 flex justify-between items-center text-sm">
+            <span class="text-gray-300">Total Payable:</span>
+            <span id="bookingTotalText" class="text-xl font-bold text-green-400">₹50</span>
+          </div>
+
+          <button type="submit" class="w-full glass-btn py-3 rounded-xl font-bold text-sm tracking-wide">
+            Book & Pay Now
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 3. My Purchases & Orders Section -->
+    <section id="ordersTab" class="tab-content hidden">
+      <h2 class="text-xl font-bold mb-6 flex items-center space-x-2 text-indigo-300">
+        <i class="fa-solid fa-box-open"></i>
+        <span>My Purchased Codes & Bookings</span>
+      </h2>
+      <div id="userOrdersContainer" class="space-y-4">
+        <p class="text-gray-400 text-sm">Pehle Google se login karein apne purchases dekhne ke liye.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDPykYiu2e0z8kMzFJCNEpwSp-J08Sljdk",
+      authDomain: "redeem-code-a0802.firebaseapp.com",
+      databaseURL: "https://redeem-code-a0802-default-rtdb.firebaseio.com",
+      projectId: "redeem-code-a0802",
+      storageBucket: "redeem-code-a0802.firebasestorage.app",
+      messagingSenderId: "519897399504",
+      appId: "1:519897399504:web:f898bc5d7e235348435ed5"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let globalRazorpayKey = "rzp_test_YourKeyHere"; // Admin settings se sync hoga
+
+    // Fetch Admin Settings (Razorpay Key)
+    db.ref("settings/razorpayKey").on("value", snap => {
+      if(snap.exists() && snap.val()) {
+        globalRazorpayKey = snap.val();
+      }
+    });
+
+    // Google Auth
+    const googleLoginBtn = document.getElementById("googleLoginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const authSection = document.getElementById("authSection");
+    const userInfo = document.getElementById("userInfo");
+    const userAvatar = document.getElementById("userAvatar");
+    const userName = document.getElementById("userName");
+    const userEmail = document.getElementById("userEmail");
+
+    googleLoginBtn.addEventListener("click", () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(err => alert("Login Error: " + err.message));
+    });
+
+    logoutBtn.addEventListener("click", () => auth.signOut());
+
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      if (user) {
+        googleLoginBtn.classList.add("hidden");
+        userInfo.classList.remove("hidden");
+        userAvatar.src = user.photoURL || "https://via.placeholder.com/40";
+        userName.innerText = user.displayName;
+        userEmail.innerText = user.email;
+        loadUserOrders(user.uid);
+      } else {
+        googleLoginBtn.classList.remove("hidden");
+        userInfo.classList.add("hidden");
+        document.getElementById("userOrdersContainer").innerHTML = `<p class="text-gray-400 text-sm">Apne codes dekhne ke liye login karein.</p>`;
+      }
+    });
+
+    // Tab Switch
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      ['tabBtnInstant', 'tabBtnBooking', 'tabBtnOrders'].forEach(btn => {
+        document.getElementById(btn).className = "bg-white/5 hover:bg-white/10 px-6 py-2.5 rounded-xl font-medium text-sm border border-white/10 transition";
+      });
+
+      if(tabId === 'instantTab') document.getElementById('tabBtnInstant').className = "glass-btn px-6 py-2.5 rounded-xl font-medium text-sm transition";
+      if(tabId === 'bookingTab') document.getElementById('tabBtnBooking').className = "glass-btn px-6 py-2.5 rounded-xl font-medium text-sm transition";
+      if(tabId === 'ordersTab') document.getElementById('tabBtnOrders').className = "glass-btn px-6 py-2.5 rounded-xl font-medium text-sm transition";
+    }
+
+    // Load Available Codes
+    db.ref("codes").on("value", snapshot => {
+      const container = document.getElementById("codesContainer");
+      container.innerHTML = "";
+      let found = false;
+
+      snapshot.forEach(child => {
+        const item = child.val();
+        if (item.status === "available") {
+          found = true;
+          const card = document.createElement("div");
+          card.className = "glass-card p-6 rounded-2xl flex flex-col justify-between transition hover:-translate-y-1 hover:border-indigo-400/50";
+          card.innerHTML = `
+            <div>
+              <div class="flex justify-between items-start mb-3">
+                <span class="px-2.5 py-1 bg-green-500/20 text-green-400 rounded-lg text-xs font-semibold border border-green-500/30">Instant Delivery</span>
+                <span class="text-xs text-gray-400 font-mono">Worth: ₹${item.value}</span>
+              </div>
+              <h3 class="text-lg font-bold text-white mb-1">${item.title}</h3>
+              <p class="text-2xl font-black text-indigo-400 mb-4">₹${item.price}</p>
+            </div>
+            <button onclick="buyInstantCode('${child.key}', ${item.price}, '${item.title}')" class="w-full glass-btn py-2.5 rounded-xl font-semibold text-sm">
+              <i class="fa-solid fa-bolt mr-1"></i> Pay ₹${item.price} & Reveal
+            </button>
+          `;
+          container.appendChild(card);
+        }
+      });
+
+      if (!found) {
+        container.innerHTML = `<div class="glass-card p-8 rounded-2xl text-center text-gray-400 col-span-full">Abhi koi instant code stock me nahi hai. Aap "Custom Booking" kar sakte hain!</div>`;
+      }
+    });
+
+    // Buy Instant Code with Razorpay
+    window.buyInstantCode = function(codeKey, price, title) {
+      if (!currentUser) {
+        alert("Pehle Google se login karein!");
+        return;
+      }
+
+      const options = {
+        key: globalRazorpayKey,
+        amount: price * 100, // paise
+        currency: "INR",
+        name: "RedeemZone Store",
+        description: `Buying ${title}`,
+        prefill: {
+          name: currentUser.displayName,
+          email: currentUser.email
+        },
+        theme: { color: "#6366f1" },
+        handler: function(response) {
+          // Razorpay success callback
+          claimCode(codeKey, price, title);
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.on('payment.failed', function (response){
+        alert("Payment fail ho gaya: " + response.error.description);
+      });
+      rzp.open();
+    };
+
+    function claimCode(codeKey, price, title) {
+      db.ref("codes/" + codeKey).once("value", snapshot => {
+        const data = snapshot.val();
+        if (data && data.status === "available") {
+          // Mark as sold
+          db.ref("codes/" + codeKey).update({
+            status: "sold",
+            boughtBy: currentUser.email,
+            boughtByUid: currentUser.uid,
+            soldAt: firebase.database.ServerValue.TIMESTAMP
+          });
+
+          // Add to user purchases
+          db.ref("purchases").push({
+            userId: currentUser.uid,
+            userEmail: currentUser.email,
+            codeTitle: title,
+            redeemCode: data.secretCode,
+            value: data.value,
+            price: price,
+            type: "instant",
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+          });
+
+          alert("Payment Successful! Redeem code aapke 'My Purchases' section me add ho chuka hai.");
+          switchTab('ordersTab');
+        } else {
+          alert("Ye code abhi kisi aur ne khareed liya!");
+        }
+      });
+    }
+
+    // Booking Calculation
+    const bookAmount = document.getElementById("bookAmount");
+    const bookQty = document.getElementById("bookQty");
+    const bookingTotalText = document.getElementById("bookingTotalText");
+
+    function calcBooking() {
+      const amt = parseInt(bookAmount.value) || 0;
+      const qty = parseInt(bookQty.value) || 1;
+      bookingTotalText.innerText = `₹${amt * qty}`;
+    }
+    bookAmount.addEventListener("change", calcBooking);
+    bookQty.addEventListener("input", calcBooking);
+
+    // Handle Custom Booking Submit
+    document.getElementById("bookingForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!currentUser) {
+        alert("Pehle Google se login karein!");
+        return;
+      }
+
+      const amt = parseInt(bookAmount.value);
+      const qty = parseInt(bookQty.value);
+      const total = amt * qty;
+
+      const options = {
+        key: globalRazorpayKey,
+        amount: total * 100,
+        currency: "INR",
+        name: "RedeemZone Booking",
+        description: `Booking: ₹${amt} x ${qty} Codes`,
+        prefill: {
+          name: currentUser.displayName,
+          email: currentUser.email
+        },
+        theme: { color: "#a855f7" },
+        handler: function(response) {
+          // Add booking to Firebase
+          db.ref("bookings").push({
+            userId: currentUser.uid,
+            userName: currentUser.displayName,
+            userEmail: currentUser.email,
+            denomination: amt,
+            quantity: qty,
+            totalPrice: total,
+            paymentId: response.razorpay_payment_id || "PAID_RZP",
+            status: "Pending Admin Approval",
+            deliveredCode: "",
+            bookedAt: firebase.database.ServerValue.TIMESTAMP
+          }).then(() => {
+            alert("Booking confirm ho chuki hai! Admin aapki request process karke code deliver karega.");
+            switchTab('ordersTab');
+          });
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+    });
+
+    // Load User's Purchases & Bookings
+    function loadUserOrders(uid) {
+      const container = document.getElementById("userOrdersContainer");
+      
+      // Listen to instant purchases
+      db.ref("purchases").orderByChild("userId").equalTo(uid).on("value", snapPurchases => {
+        // Listen to bookings
+        db.ref("bookings").orderByChild("userId").equalTo(uid).on("value", snapBookings => {
+          container.innerHTML = "";
+          let items = [];
+
+          snapPurchases.forEach(c => items.push({ id: c.key, ...c.val(), orderType: "Instant" }));
+          snapBookings.forEach(c => items.push({ id: c.key, ...c.val(), orderType: "Booking" }));
+
+          if (items.length === 0) {
+            container.innerHTML = `<div class="glass-card p-6 rounded-xl text-center text-gray-400">Aapne abhi tak koi code nahi khareeda hai.</div>`;
+            return;
+          }
+
+          items.reverse().forEach(item => {
+            const card = document.createElement("div");
+            card.className = "glass-card p-5 rounded-xl border border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4";
+
+            if (item.orderType === "Instant") {
+              card.innerHTML = `
+                <div>
+                  <span class="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs">Instant Buy</span>
+                  <h4 class="font-bold text-base mt-1 text-white">${item.codeTitle} (Value: ₹${item.value})</h4>
+                  <p class="text-xs text-gray-400">Paid: ₹${item.price}</p>
+                </div>
+                <div class="bg-black/40 border border-indigo-400/30 px-4 py-2 rounded-lg font-mono text-indigo-300 font-bold select-all">
+                  ${item.redeemCode}
+                </div>
+              `;
+            } else {
+              // Custom Booking
+              const isDelivered = item.status === "Delivered";
+              card.innerHTML = `
+                <div>
+                  <span class="px-2 py-0.5 ${isDelivered ? 'bg-purple-500/20 text-purple-400' : 'bg-yellow-500/20 text-yellow-400'} rounded text-xs">
+                    Booking: ${item.status}
+                  </span>
+                  <h4 class="font-bold text-base mt-1 text-white">₹${item.denomination} Code x ${item.quantity}</h4>
+                  <p class="text-xs text-gray-400">Total Paid: ₹${item.totalPrice} | Delivered to: ${item.userEmail}</p>
+                </div>
+                <div>
+                  ${isDelivered ? 
+                    `<div class="bg-black/40 border border-green-400/30 px-4 py-2 rounded-lg font-mono text-green-300 font-bold select-all">${item.deliveredCode}</div>` : 
+                    `<span class="text-xs text-yellow-400 italic"><i class="fa-solid fa-hourglass-half mr-1"></i> Admin code deliver kar raha hai</span>`
+                  }
+                </div>
+              `;
+            }
+            container.appendChild(card);
+          });
+        });
+      });
+    }
+  </script>
+</body>
+  </html>
