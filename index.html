@@ -157,7 +157,7 @@
     </div>
   </aside>
 
-  <!-- 3. HERO SECTION WITH 1500+ DYNAMIC COUNTER -->
+  <!-- 3. HERO SECTION WITH DYNAMIC COUNTER -->
   <section class="max-w-6xl mx-auto px-4 pt-10 pb-8 text-center">
     
     <!-- 1500+ Dynamic Counter Badge -->
@@ -172,7 +172,7 @@
       <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-500">Instant Screen Reveal</span>
     </h1>
     <p class="text-xs sm:text-sm text-gray-400 max-w-xl mx-auto mt-2">
-      Kisi email ka intezar nahi! Payment hote hi code seedha aapki screen par show hoga aur aapke Vault me save ho jayega.
+      Payment hote hi code seedha aapki screen par show hoga aur aapke Vault me save ho jayega.
     </p>
 
     <!-- Supported Chips -->
@@ -202,7 +202,7 @@
     <!-- Section 2: Custom Booking -->
     <section id="custom-booking" class="glass rounded-3xl p-6 sm:p-8 border border-purple-500/20">
       <h2 class="text-xl font-bold text-white mb-1 font-display">Custom Redeem Code Booking</h2>
-      <p class="text-xs text-gray-400 mb-6">Stock me code na ho to yahan se book karein, Admin turant aapke Vault me deliver karega.</p>
+      <p class="text-xs text-gray-400 mb-6">Stock me code na ho to yahan se book karein, Admin turant alag-alag codes aapke Vault me deliver karega.</p>
 
       <form id="bookingForm" class="space-y-4 max-w-lg">
         <div class="grid grid-cols-2 gap-3">
@@ -217,7 +217,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-gray-300 uppercase mb-1">Quantity</label>
+            <label class="block text-[11px] font-semibold text-gray-300 uppercase mb-1">Quantity (Kitne Codes)</label>
             <input type="number" id="bookQty" min="1" max="10" value="1" class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs text-white">
           </div>
         </div>
@@ -302,7 +302,6 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
         <div class="glass-card p-6 rounded-2xl">
           <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg mb-3">
             <i class="fa-solid fa-bolt"></i>
@@ -332,18 +331,17 @@
             Aapka paisa direct RBI-approved Razorpay secure payment gateway se process hota hai, jahan UPI, Card aur Netbanking 100% safe rehte hain.
           </p>
         </div>
-
       </div>
     </section>
 
   </main>
 
-  <!-- FLOATING WHATSAPP BUTTON (ADMIN CONTROLLED) -->
+  <!-- FLOATING WHATSAPP BUTTON (AUTO FORMATTED NO ZERO ERROR) -->
   <a id="whatsappFloatBtn" href="#" target="_blank" class="fixed bottom-5 right-5 z-40 bg-emerald-600 hover:bg-emerald-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition hover:scale-110">
     <i class="fa-brands fa-whatsapp text-2xl"></i>
   </a>
 
-  <!-- MODAL: INSTANT SUCCESS CODE POPUP (CELEBRATION) -->
+  <!-- MODAL: INSTANT SUCCESS CODE POPUP -->
   <div id="successModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="glass-card w-full max-w-sm p-6 sm:p-7 rounded-3xl border border-emerald-500/40 text-center shadow-2xl relative">
       <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mb-3 shadow-lg">
@@ -428,18 +426,30 @@
       document.getElementById("navLiveCount").innerText = `${count.toLocaleString('en-IN')}+`;
     });
 
-    // Function to increment sold count in database
-    function incrementSoldCount() {
+    function incrementSoldCount(qty = 1) {
       db.ref("stats/soldCounter").transaction(current => {
-        return (current || 1500) + 1;
+        return (current || 1500) + qty;
       });
     }
 
-    // 2. Settings Sync (Razorpay & WhatsApp)
+    // Helper: WhatsApp URL Formatter (Fixes Zero issue)
+    function sanitizeWhatsappNumber(phone) {
+      if (!phone) return "919876543210";
+      let clean = phone.toString().replace(/[^\d]/g, '');
+      if (clean.startsWith('0') && clean.length === 11) {
+        clean = '91' + clean.substring(1);
+      } else if (clean.length === 10) {
+        clean = '91' + clean;
+      }
+      return clean;
+    }
+
+    // 2. Settings Sync
     db.ref("settings").on("value", s => {
       activeSettings = s.val() || {};
-      const waNumber = activeSettings.supportWhatsapp || "919876543210";
-      document.getElementById("whatsappFloatBtn").href = `https://wa.me/${waNumber}?text=Namaste,%20mujhe%20redeem%20code%20ke%20baare%20me%20puchna%20hai`;
+      const rawNumber = activeSettings.supportWhatsapp || "919876543210";
+      const validWa = sanitizeWhatsappNumber(rawNumber);
+      document.getElementById("whatsappFloatBtn").href = `https://wa.me/${validWa}?text=Namaste,%20mujhe%20redeem%20code%20ke%20baare%20me%20help%20chahiye`;
     });
 
     // Drawer Menu
@@ -483,7 +493,7 @@
       }
     });
 
-    // Load Stock & Realtime Out-of-Stock
+    // Load Stock
     db.ref("codes").on("value", snap => {
       const container = document.getElementById("instantCodesContainer");
       container.innerHTML = "";
@@ -520,7 +530,7 @@
       }
     });
 
-    // Real Instant Buy Engine with Razorpay
+    // Buy Instant Code
     window.buyRealInstantCode = function(codeKey, price, title) {
       if (!currentUser) {
         showToast("Pehle Google se login karein!");
@@ -543,17 +553,14 @@
               const data = snap.val();
               if (data && data.status === "available") {
                 
-                // 1. Immediately Out of Stock
                 db.ref("codes/" + codeKey).update({
                   status: "sold",
                   boughtBy: currentUser.email,
                   soldAt: firebase.database.ServerValue.TIMESTAMP
                 });
 
-                // 2. Increment 1500+ Sales counter
-                incrementSoldCount();
+                incrementSoldCount(1);
 
-                // 3. Add to buyer's vault
                 db.ref("purchases").push({
                   userId: currentUser.uid,
                   userEmail: currentUser.email,
@@ -566,7 +573,6 @@
                   timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
 
-                // 4. Show Celebration Modal
                 openSuccessModal(title, data.secretCode);
 
               } else {
@@ -584,7 +590,6 @@
       rzp.open();
     };
 
-    // Celebration Modal Functions
     function openSuccessModal(title, code) {
       document.getElementById("successModalTitle").innerText = title;
       document.getElementById("revealedCodeText").innerText = code;
@@ -645,10 +650,10 @@
               totalPrice: total,
               paymentId: response.razorpay_payment_id,
               status: "Pending Delivery",
-              deliveredCode: "",
+              deliveredCodes: [],
               bookedAt: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-              showToast("Booking Successful! Admin jald aapke Vault me code deliver karega.");
+              showToast("Booking Successful! Admin jald aapke Vault me alag-alag codes deliver karega.");
               location.href = "#my-vault";
             });
           }
@@ -659,7 +664,7 @@
       rzp.open();
     };
 
-    // Load Vault
+    // Load Vault & Multi-Code Delivery Rendering
     function loadUserVault(uid) {
       const container = document.getElementById("userVaultContainer");
       const orderDropdown = document.getElementById("fbLinkedOrder");
@@ -685,54 +690,71 @@
             orderDropdown.appendChild(opt);
 
             const div = document.createElement("div");
-            div.className = "glass-card p-3.5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3";
+            div.className = "glass-card p-4 rounded-xl space-y-3";
 
             if (ord.type === "Instant") {
               div.innerHTML = `
-                <div>
-                  <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400">INSTANT BOUGHT</span>
-                  <h4 class="font-bold text-white text-xs mt-0.5">${ord.codeTitle}</h4>
-                  <p class="text-[10px] text-gray-400">Paid: ₹${ord.price}</p>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="bg-black/60 border border-indigo-500/40 px-3 py-1.5 rounded-lg font-mono text-indigo-300 font-bold text-xs select-all">
-                    ${ord.redeemCode}
-                  </span>
-                  <button onclick="navigator.clipboard.writeText('${ord.redeemCode}'); showToast('Code Copied!')" class="p-1.5 bg-white/10 rounded text-xs text-white">
-                    <i class="fa-solid fa-copy"></i>
-                  </button>
-                  <a href="https://play.google.com/redeem?code=${encodeURIComponent(ord.redeemCode)}" target="_blank" class="p-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded text-xs">
-                    <i class="fa-brands fa-google-play"></i>
-                  </a>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <div>
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400">INSTANT BOUGHT</span>
+                    <h4 class="font-bold text-white text-xs mt-0.5">${ord.codeTitle}</h4>
+                    <p class="text-[10px] text-gray-400">Paid: ₹${ord.price}</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="bg-black/60 border border-indigo-500/40 px-3 py-1.5 rounded-lg font-mono text-indigo-300 font-bold text-xs select-all">
+                      ${ord.redeemCode}
+                    </span>
+                    <button onclick="navigator.clipboard.writeText('${ord.redeemCode}'); showToast('Code Copied!')" class="p-1.5 bg-white/10 rounded text-xs text-white">
+                      <i class="fa-solid fa-copy"></i>
+                    </button>
+                    <a href="https://play.google.com/redeem?code=${encodeURIComponent(ord.redeemCode)}" target="_blank" class="p-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded text-xs">
+                      <i class="fa-brands fa-google-play"></i>
+                    </a>
+                  </div>
                 </div>
               `;
             } else {
+              // Custom Booking with Multi-Codes Support
               const isDelivered = ord.status === "Delivered";
-              div.innerHTML = `
-                <div>
-                  <span class="px-2 py-0.5 rounded text-[9px] font-bold ${isDelivered ? 'bg-purple-500/20 text-purple-400' : 'bg-amber-500/20 text-amber-300'}">
-                    BOOKING: ${ord.status}
-                  </span>
-                  <h4 class="font-bold text-white text-xs mt-0.5">₹${ord.denomination} × ${ord.quantity} Codes</h4>
-                  <p class="text-[10px] text-gray-400">Total: ₹${ord.totalPrice}</p>
-                </div>
-                <div>
-                  ${isDelivered ? `
-                    <div class="flex items-center gap-2">
-                      <span class="bg-black/60 border border-emerald-500/40 px-3 py-1.5 rounded-lg font-mono text-emerald-300 font-bold text-xs select-all">
-                        ${ord.deliveredCode}
-                      </span>
-                      <button onclick="navigator.clipboard.writeText('${ord.deliveredCode}'); showToast('Code Copied!')" class="p-1.5 bg-white/10 rounded text-xs text-white">
-                        <i class="fa-solid fa-copy"></i>
-                      </button>
-                      <a href="https://play.google.com/redeem?code=${encodeURIComponent(ord.deliveredCode)}" target="_blank" class="p-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded text-xs">
-                        <i class="fa-brands fa-google-play"></i>
-                      </a>
+              const codesList = ord.deliveredCodes || (ord.deliveredCode ? [ord.deliveredCode] : []);
+
+              let codesHtml = '';
+              if (isDelivered && codesList.length > 0) {
+                codesHtml = `
+                  <div class="space-y-2 mt-2 pt-2 border-t border-white/10">
+                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Delivered Codes (${codesList.length} Items):</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      ${codesList.map((c, i) => `
+                        <div class="bg-black/50 border border-emerald-500/30 p-2 rounded-lg flex items-center justify-between gap-2">
+                          <span class="font-mono text-emerald-300 font-bold text-xs select-all">#${i+1}: ${c}</span>
+                          <div class="flex items-center gap-1">
+                            <button onclick="navigator.clipboard.writeText('${c}'); showToast('Code #${i+1} Copied!')" class="p-1 bg-white/10 hover:bg-white/20 rounded text-white text-xs" title="Copy">
+                              <i class="fa-solid fa-copy"></i>
+                            </button>
+                            <a href="https://play.google.com/redeem?code=${encodeURIComponent(c)}" target="_blank" class="p-1 bg-emerald-500/20 text-emerald-300 rounded text-xs" title="Redeem">
+                              <i class="fa-brands fa-google-play"></i>
+                            </a>
+                          </div>
+                        </div>
+                      `).join('')}
                     </div>
-                  ` : `
-                    <span class="text-[11px] text-amber-400 italic">Processing by Admin...</span>
-                  `}
+                  </div>
+                `;
+              } else {
+                codesHtml = `<span class="text-[11px] text-amber-400 italic block mt-1"><i class="fa-solid fa-clock mr-1"></i> Admin is generating your ${ord.quantity} codes...</span>`;
+              }
+
+              div.innerHTML = `
+                <div class="flex justify-between items-start">
+                  <div>
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold ${isDelivered ? 'bg-purple-500/20 text-purple-400' : 'bg-amber-500/20 text-amber-300'}">
+                      BOOKING: ${ord.status}
+                    </span>
+                    <h4 class="font-bold text-white text-xs mt-1">₹${ord.denomination} × ${ord.quantity} Codes</h4>
+                    <p class="text-[10px] text-gray-400">Total Paid: ₹${ord.totalPrice}</p>
+                  </div>
                 </div>
+                ${codesHtml}
               `;
             }
             container.appendChild(div);
@@ -788,7 +810,7 @@
       });
     });
 
-    // 3. LIVE SOCIAL PROOF POPUP TICKER
+    // Social proof ticker
     const randomCities = ["Delhi", "Mumbai", "Patna", "Kolkata", "Lucknow", "Jaipur", "Bengaluru", "Indore"];
     const randomDenoms = ["₹50", "₹100", "₹250", "₹500"];
     setInterval(() => {
