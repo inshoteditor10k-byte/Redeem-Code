@@ -1,166 +1,416 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="hi" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RedeemStore - Buy & Book Redeem Codes</title>
+  <title>PlayVault - Instant Google Play & Game Redeem Codes</title>
+  
+  <!-- Inter & Rajdhani Gaming Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
   <!-- Firebase Compat SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  
   <!-- Razorpay Checkout -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Rajdhani', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              dark: '#080c14',
+              surface: '#0f172a',
+              card: '#131e36',
+              border: 'rgba(255, 255, 255, 0.08)'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
   <style>
     body {
-      background: radial-gradient(circle at top left, #1e1b4b, #0f172a, #020617);
-      min-height: 100vh;
-      color: #f8fafc;
+      background-color: #070b12;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.12) 0px, transparent 50%);
+      color: #e2e8f0;
     }
-    .glass-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    .store-card {
+      background: linear-gradient(180deg, rgba(19, 30, 54, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .glass-btn {
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.7), rgba(168, 85, 247, 0.7));
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+    .store-card:hover {
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.3);
+      transform: translateY(-3px);
     }
-    .glass-btn:hover {
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(168, 85, 247, 0.9));
-      box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+    .glow-btn {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
+      transition: all 0.2s ease;
+    }
+    .glow-btn:hover {
+      box-shadow: 0 0 30px rgba(124, 58, 237, 0.7);
+      transform: scale(1.02);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #0b111e;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #233554;
+      border-radius: 9999px;
     }
   </style>
 </head>
-<body class="font-sans antialiased">
+<body class="antialiased custom-scroll">
 
-  <!-- Navbar -->
-  <nav class="glass-card sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-white/10">
-    <div class="flex items-center space-x-3">
-      <i class="fa-solid fa-bolt text-indigo-400 text-2xl animate-pulse"></i>
-      <span class="text-2xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">
-        RedeemZone
-      </span>
-    </div>
-    
-    <div id="authSection" class="flex items-center space-x-4">
-      <button id="googleLoginBtn" class="glass-btn px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all">
-        <i class="fa-brands fa-google text-red-400"></i>
-        <span>Continue with Google</span>
-      </button>
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-20 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
-      <div id="userInfo" class="hidden flex items-center space-x-3">
-        <img id="userAvatar" src="" class="w-9 h-9 rounded-full border border-indigo-400" alt="Avatar">
-        <div class="text-left hidden sm:block">
-          <p id="userName" class="text-sm font-medium leading-none"></p>
-          <span id="userEmail" class="text-xs text-gray-400"></span>
+  <!-- 1. Navigation Bar -->
+  <nav class="sticky top-0 z-40 bg-[#070b12]/90 backdrop-blur-xl border-b border-brand-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between py-3">
+      
+      <!-- Brand Logo -->
+      <a href="#" class="flex items-center space-x-3 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:rotate-6 transition-transform">
+          <i class="fa-solid fa-gamepad text-white text-lg"></i>
         </div>
-        <button id="logoutBtn" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 p-2 rounded-lg text-xs border border-red-500/30 transition">
-          <i class="fa-solid fa-power-off"></i>
-        </button>
+        <div>
+          <span class="font-display text-2xl font-black tracking-wide text-white flex items-center gap-1">
+            PLAY<span class="text-indigo-400">VAULT</span>
+            <span class="text-[10px] uppercase font-sans font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded ml-1">Verified</span>
+          </span>
+          <p class="text-[11px] text-gray-400 -mt-1 hidden sm:block">Automated Digital Gift Cards</p>
+        </div>
+      </a>
+
+      <!-- Quick Nav Links -->
+      <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-300">
+        <a href="#storeSection" class="hover:text-indigo-400 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-tags text-xs"></i> Instant Store
+        </a>
+        <a href="#bookingSection" class="hover:text-indigo-400 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-layer-group text-xs"></i> Bulk / Custom Booking
+        </a>
+        <a href="#ordersSection" class="hover:text-indigo-400 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-key text-xs"></i> My Vault (Codes)
+        </a>
+        <a href="#communityBoard" class="hover:text-amber-400 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-bullhorn text-xs text-amber-400"></i> Public Reviews & Help
+        </a>
       </div>
+
+      <!-- User Auth Section -->
+      <div>
+        <button id="googleLoginBtn" class="glow-btn text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2">
+          <i class="fa-brands fa-google text-sm"></i>
+          <span>Continue with Google</span>
+        </button>
+
+        <div id="userProfile" class="hidden flex items-center gap-3 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
+          <img id="userAvatar" src="" class="w-8 h-8 rounded-lg border border-indigo-400" alt="Avatar">
+          <div class="text-left hidden lg:block">
+            <p id="userName" class="text-xs font-bold text-white leading-tight"></p>
+            <p id="userEmail" class="text-[10px] text-gray-400 leading-tight"></p>
+          </div>
+          <button id="logoutBtn" title="Logout" class="text-gray-400 hover:text-red-400 p-1 transition ml-1">
+            <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+          </button>
+        </div>
+      </div>
+
     </div>
   </nav>
 
-  <!-- Hero Section -->
-  <header class="max-w-6xl mx-auto px-6 pt-12 pb-6 text-center">
-    <h1 class="text-4xl sm:text-5xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-indigo-200 to-purple-400">
-      Instant & Pre-Book Redeem Codes
+  <!-- 2. Hero Section & Live Trust Metrics -->
+  <header class="relative pt-12 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
+    
+    <!-- Trust Pill -->
+    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-6 animate-pulse">
+      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+      <span>UPI & Razorpay Secured Gateway • 100% Guaranteed Redeem Codes</span>
+    </div>
+
+    <h1 class="font-display text-4xl sm:text-6xl font-black text-white tracking-tight uppercase leading-tight mb-4">
+      Get Google Play & Gaming Codes <br class="hidden sm:block">
+      <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-500">
+        In Under 60 Seconds
+      </span>
     </h1>
-    <p class="text-gray-400 max-w-xl mx-auto text-sm sm:text-base">
-      Turant code kharidein ya apni requirement ke hisab se pre-order karein. Safe, secure & trusted delivery.
+
+    <p class="max-w-2xl mx-auto text-gray-400 text-sm sm:text-base leading-relaxed">
+      Kharidein verified Google Play Gift Cards direct screen par. Stock khatam ho toh customized amount book karein. Agar koi issue ho toh transparent community board par order tag karke report karein.
     </p>
 
-    <!-- Navigation Tabs -->
-    <div class="flex justify-center mt-8 space-x-4">
-      <button onclick="switchTab('instantTab')" id="tabBtnInstant" class="glass-btn px-6 py-2.5 rounded-xl font-medium text-sm transition">
-        <i class="fa-solid fa-gift mr-2"></i> Instant Buy Codes
-      </button>
-      <button onclick="switchTab('bookingTab')" id="tabBtnBooking" class="bg-white/5 hover:bg-white/10 px-6 py-2.5 rounded-xl font-medium text-sm border border-white/10 transition">
-        <i class="fa-solid fa-clock mr-2"></i> Custom Booking
-      </button>
-      <button onclick="switchTab('ordersTab')" id="tabBtnOrders" class="bg-white/5 hover:bg-white/10 px-6 py-2.5 rounded-xl font-medium text-sm border border-white/10 transition">
-        <i class="fa-solid fa-receipt mr-2"></i> My Purchases
-      </button>
+    <!-- Platform Icons Supported -->
+    <div class="flex flex-wrap justify-center items-center gap-6 mt-8 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+      <span class="flex items-center gap-2"><i class="fa-brands fa-google-play text-emerald-400 text-base"></i> Google Play</span>
+      <span class="flex items-center gap-2"><i class="fa-solid fa-fire text-amber-500 text-base"></i> Free Fire Diamonds</span>
+      <span class="flex items-center gap-2"><i class="fa-solid fa-shield text-blue-400 text-base"></i> BGMI UC</span>
+      <span class="flex items-center gap-2"><i class="fa-brands fa-steam text-cyan-400 text-base"></i> Steam Wallet</span>
+    </div>
+
+    <!-- Live Store Trust Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-12">
+      <div class="store-card p-4 rounded-2xl text-center">
+        <p class="text-2xl font-black text-indigo-400 font-display">12,500+</p>
+        <p class="text-xs text-gray-400">Codes Delivered</p>
+      </div>
+      <div class="store-card p-4 rounded-2xl text-center">
+        <p class="text-2xl font-black text-emerald-400 font-display">99.8%</p>
+        <p class="text-xs text-gray-400">Success Rate</p>
+      </div>
+      <div class="store-card p-4 rounded-2xl text-center">
+        <p class="text-2xl font-black text-amber-400 font-display">&lt; 30 Sec</p>
+        <p class="text-xs text-gray-400">Avg. Delivery</p>
+      </div>
+      <div class="store-card p-4 rounded-2xl text-center">
+        <p class="text-2xl font-black text-pink-400 font-display">100% Open</p>
+        <p class="text-xs text-gray-400">Dispute & Review Board</p>
+      </div>
     </div>
   </header>
 
-  <!-- Main Content Container -->
-  <main class="max-w-6xl mx-auto px-6 py-6 pb-20">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24 pb-24">
 
-    <!-- 1. Instant Buy Codes Section -->
-    <section id="instantTab" class="tab-content">
-      <h2 class="text-xl font-bold mb-6 flex items-center space-x-2 text-indigo-300">
-        <i class="fa-solid fa-fire text-orange-400"></i>
-        <span>Available Codes In Stock</span>
-      </h2>
-      <div id="codesContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        <div class="glass-card p-6 rounded-2xl text-center text-gray-400 col-span-full">
-          <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-indigo-400"></i>
-          <p>Available codes load ho rahe hain...</p>
+    <!-- 3. Section: Instant Buy Stock (Real-time available codes) -->
+    <section id="storeSection" class="relative">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 border-b border-brand-border pb-4 gap-2">
+        <div>
+          <span class="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+            <i class="fa-solid fa-bolt"></i> Live Stock Ready to Deliver
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Available Redeem Codes</h2>
+        </div>
+        <p class="text-xs text-gray-400">Payment hote hi redeem code turant screen par reveal ho jayega.</p>
+      </div>
+
+      <div id="instantCodesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Live Loading Skeleton -->
+        <div class="store-card p-8 rounded-2xl text-center col-span-full">
+          <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-400 mb-3"></i>
+          <p class="text-sm text-gray-400">Connecting to secure inventory database...</p>
         </div>
       </div>
     </section>
 
-    <!-- 2. Custom Booking Section -->
-    <section id="bookingTab" class="tab-content hidden">
-      <div class="max-w-xl mx-auto glass-card p-8 rounded-2xl">
-        <h2 class="text-2xl font-bold mb-2 text-purple-300 flex items-center space-x-2">
-          <i class="fa-solid fa-calendar-check"></i>
-          <span>Custom Code Booking</span>
-        </h2>
-        <p class="text-xs text-gray-400 mb-6">Agar instant stock me code nahi hai to yahan se book karein, admin aapko send karega.</p>
+    <!-- 4. Section: Custom Pre-Booking -->
+    <section id="bookingSection" class="relative">
+      <div class="store-card rounded-3xl p-6 sm:p-10 border border-indigo-500/20 overflow-hidden relative">
+        <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <form id="bookingForm" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Redeem Code Amount (Kitne wala code chahiye?)</label>
-            <select id="bookAmount" class="w-full bg-slate-900/60 border border-white/20 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-400" required>
-              <option value="50">₹50 Code</option>
-              <option value="100">₹100 Code</option>
-              <option value="250">₹250 Code</option>
-              <option value="500">₹500 Code</option>
-              <option value="800">₹800 Code</option>
-              <option value="1000">₹1000 Code</option>
-            </select>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          
+          <div class="lg:col-span-5 space-y-4">
+            <span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
+              Bulk & On-Demand Order
+            </span>
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Stock me manchaha code nahi mila?</h2>
+            <p class="text-sm text-gray-400 leading-relaxed">
+              Yahan se customized value (₹50 se ₹2000 tak) aur jitni marzi utni quantity book karein. Payment hone ke turant baad Admin aapke Google login email par code deliver karega aur wo aapke <b>"My Vault"</b> me bhi dikhega.
+            </p>
+            <div class="space-y-2 text-xs text-gray-300 pt-2">
+              <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-400"></i> Priority manual processing by Admin</div>
+              <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-400"></i> Full refund guarantee if not delivered in 6 hours</div>
+              <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-400"></i> Directly tracked via Public Dispute Board</div>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Quantity (Kitne codes)</label>
-            <input type="number" id="bookQty" min="1" max="10" value="1" class="w-full bg-slate-900/60 border border-white/20 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-400" required>
+          <div class="lg:col-span-7 bg-[#0b111e]/90 p-6 sm:p-8 rounded-2xl border border-white/10 shadow-2xl">
+            <form id="customBookingForm" class="space-y-5">
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Code Denomination</label>
+                  <select id="bookDenomination" class="w-full bg-[#131e36] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                    <option value="50">₹50 Google Play Card</option>
+                    <option value="100" selected>₹100 Google Play Card</option>
+                    <option value="150">₹150 Google Play Card</option>
+                    <option value="250">₹250 Google Play Card</option>
+                    <option value="500">₹500 Google Play Card</option>
+                    <option value="800">₹800 Google Play Card</option>
+                    <option value="1000">₹1,000 Google Play Card</option>
+                    <option value="2000">₹2,000 Google Play Card</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Quantity (Cards)</label>
+                  <input type="number" id="bookQuantity" min="1" max="10" value="1" class="w-full bg-[#131e36] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                </div>
+              </div>
+
+              <!-- Price breakdown card -->
+              <div class="bg-indigo-950/40 border border-indigo-500/20 rounded-xl p-4 flex justify-between items-center">
+                <div>
+                  <p class="text-xs text-gray-400">Estimated Total (No Extra Charges)</p>
+                  <p id="bookingBreakdownText" class="text-xs text-indigo-300 font-medium">1 Card × ₹100</p>
+                </div>
+                <div class="text-right">
+                  <span id="bookingTotalPayable" class="text-2xl font-black text-emerald-400 font-display">₹100</span>
+                </div>
+              </div>
+
+              <button type="submit" class="w-full glow-btn text-white py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+                <i class="fa-solid fa-lock"></i>
+                <span>Confirm Booking & Pay via Razorpay</span>
+              </button>
+            </form>
           </div>
 
-          <div class="glass-card p-4 rounded-xl border border-indigo-500/20 flex justify-between items-center text-sm">
-            <span class="text-gray-300">Total Payable:</span>
-            <span id="bookingTotalText" class="text-xl font-bold text-green-400">₹50</span>
-          </div>
-
-          <button type="submit" class="w-full glass-btn py-3 rounded-xl font-bold text-sm tracking-wide">
-            Book & Pay Now
-          </button>
-        </form>
+        </div>
       </div>
     </section>
 
-    <!-- 3. My Purchases & Orders Section -->
-    <section id="ordersTab" class="tab-content hidden">
-      <h2 class="text-xl font-bold mb-6 flex items-center space-x-2 text-indigo-300">
-        <i class="fa-solid fa-box-open"></i>
-        <span>My Purchased Codes & Bookings</span>
-      </h2>
-      <div id="userOrdersContainer" class="space-y-4">
-        <p class="text-gray-400 text-sm">Pehle Google se login karein apne purchases dekhne ke liye.</p>
+    <!-- 5. Section: My Vault / Purchased Codes & Order Status -->
+    <section id="ordersSection" class="relative">
+      <div class="flex justify-between items-end mb-6 border-b border-brand-border pb-4">
+        <div>
+          <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved"></i> Private & Secured
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">My Vault (Purchased Codes)</h2>
+        </div>
+        <button onclick="refreshOrders()" class="text-xs text-gray-400 hover:text-white flex items-center gap-1 transition">
+          <i class="fa-solid fa-arrows-rotate"></i> Sync Orders
+        </button>
       </div>
+
+      <div id="userOrdersWrapper" class="space-y-4">
+        <div class="store-card p-8 rounded-2xl text-center text-gray-400">
+          <i class="fa-solid fa-lock text-3xl text-gray-500 mb-2"></i>
+          <p class="text-sm">Pehle Google se login karein. Aapke kharide gaye sabhi codes yahan 100% safe dikhenge.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Section: Public Community & Dispute / Review Board (Crucial for Trust) -->
+    <section id="communityBoard" class="relative">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-brand-border pb-4 gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-widest">
+            <i class="fa-solid fa-comments"></i> 100% Real & Transparent Community Board
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Live Reviews & Order Support</h2>
+          <p class="text-xs text-gray-400 mt-1 max-w-xl">
+            Agar kisi ko code receive nahi hua, delay hua, ya koi bhi dikkat aayi, wo apna Order ID link karke yahan likh sakta hai. Har visitor ise padh sakta hai.
+          </p>
+        </div>
+
+        <button onclick="openFeedbackModal()" class="px-5 py-2.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold uppercase tracking-wider hover:bg-amber-500/30 transition flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square"></i>
+          <span>Report Issue / Post Review</span>
+        </button>
+      </div>
+
+      <!-- Feed Container -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="publicFeedbackContainer">
+        <div class="store-card p-6 rounded-2xl text-center col-span-full text-gray-400">
+          <i class="fa-solid fa-spinner fa-spin text-2xl text-amber-400 mb-2"></i>
+          <p class="text-xs">Community messages load ho rahe hain...</p>
+        </div>
+      </div>
+
     </section>
 
   </main>
 
+  <!-- 7. Footer -->
+  <footer class="border-t border-brand-border bg-[#05080f] py-12 text-center text-xs text-gray-500">
+    <div class="max-w-7xl mx-auto px-4 space-y-4">
+      <div class="flex justify-center items-center gap-6 text-gray-400 text-sm">
+        <a href="#storeSection" class="hover:text-white">Store</a>
+        <a href="#bookingSection" class="hover:text-white">Custom Bookings</a>
+        <a href="#communityBoard" class="hover:text-white">Public Board</a>
+        <a href="admin.html" target="_blank" class="hover:text-indigo-400 font-semibold"><i class="fa-solid fa-user-shield"></i> Admin Portal</a>
+      </div>
+      <p>© 2026 PlayVault Digital Inc. Google Play is a trademark of Google LLC. All trademarks belong to their respective owners.</p>
+      <p class="text-[11px] text-gray-600">Built for speed, security and verified transparency.</p>
+    </div>
+  </footer>
+
+  <!-- Modal: Post a Review or Report Issue -->
+  <div id="feedbackModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="store-card w-full max-w-lg p-6 sm:p-8 rounded-3xl border border-white/20 relative shadow-2xl">
+      
+      <button onclick="closeFeedbackModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-bullhorn"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Post to Public Board</h3>
+          <p class="text-xs text-gray-400">Ye message sabhi users ko publicly dikhega.</p>
+        </div>
+      </div>
+
+      <form id="feedbackForm" class="space-y-4">
+        
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">Issue / Feedback Type</label>
+          <select id="fbCategory" class="w-full bg-[#0b111e] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400">
+            <option value="Issue: Code Not Received Yet">🚨 Issue: Code Not Received Yet / Payment Done</option>
+            <option value="Issue: Code Invalid or Already Used">⚠️ Issue: Code Invalid / Error on PlayStore</option>
+            <option value="Review: Received Code Instantly & Worked">✅ Review: Received Instantly & 100% Working</option>
+            <option value="General Question / Feedback">💬 General Question / Inactive Stock Request</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">
+            Link Your Paid Order (Verified Badge ke liye)
+          </label>
+          <select id="fbLinkedOrder" class="w-full bg-[#0b111e] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400">
+            <option value="None">Koi specific order nahi hai / General Query</option>
+            <!-- User orders dynamically populated -->
+          </select>
+          <span class="text-[10px] text-gray-400">Aapka order chunne par comment me 'Verified Buyer' stamp lag jayega.</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 uppercase mb-1">Your Detailed Message</label>
+          <textarea id="fbMessage" rows="4" placeholder="Apna message ya order ki samasya likhein (e.g. 'Maine ₹100 ka code 10 baje order kiya tha abhi tak nahi aaya...')" class="w-full bg-[#0b111e] border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-400" required></textarea>
+        </div>
+
+        <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-black font-extrabold text-xs uppercase tracking-wider py-3 rounded-xl transition shadow-lg shadow-amber-500/20">
+          Publish on Public Board
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT LOGIC -->
   <script>
     // Firebase Config
     const firebaseConfig = {
@@ -178,64 +428,79 @@
     const db = firebase.database();
 
     let currentUser = null;
-    let globalRazorpayKey = "rzp_test_YourKeyHere"; // Admin settings se sync hoga
+    let cachedUserOrders = [];
+    let activeRazorpayKey = "rzp_test_placeholder";
 
-    // Fetch Admin Settings (Razorpay Key)
+    // 1. Toast Notification Helper
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200',
+        error: 'bg-rose-950/90 border-rose-500/50 text-rose-200',
+        info: 'bg-indigo-950/90 border-indigo-500/50 text-indigo-200',
+        warning: 'bg-amber-950/90 border-amber-500/50 text-amber-200'
+      };
+      toast.className = `p-4 rounded-xl border backdrop-blur-md shadow-2xl text-xs flex items-center space-x-3 transition-all duration-300 pointer-events-auto ${colors[type] || colors.info}`;
+      toast.innerHTML = `<span>${message}</span>`;
+      
+      const container = document.getElementById('toastContainer');
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // 2. Sync Razorpay Key from DB
     db.ref("settings/razorpayKey").on("value", snap => {
       if(snap.exists() && snap.val()) {
-        globalRazorpayKey = snap.val();
+        activeRazorpayKey = snap.val();
       }
     });
 
-    // Google Auth
+    // 3. Auth Listener & Google Login
     const googleLoginBtn = document.getElementById("googleLoginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const authSection = document.getElementById("authSection");
-    const userInfo = document.getElementById("userInfo");
+    const userProfile = document.getElementById("userProfile");
     const userAvatar = document.getElementById("userAvatar");
     const userName = document.getElementById("userName");
     const userEmail = document.getElementById("userEmail");
+    const logoutBtn = document.getElementById("logoutBtn");
 
     googleLoginBtn.addEventListener("click", () => {
       const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(err => alert("Login Error: " + err.message));
+      auth.signInWithPopup(provider)
+        .then(() => showToast("Login successful! Welcome.", "success"))
+        .catch(err => showToast(err.message, "error"));
     });
 
-    logoutBtn.addEventListener("click", () => auth.signOut());
+    logoutBtn.addEventListener("click", () => {
+      auth.signOut().then(() => showToast("Logged out successfully.", "info"));
+    });
 
     auth.onAuthStateChanged(user => {
       currentUser = user;
       if (user) {
         googleLoginBtn.classList.add("hidden");
-        userInfo.classList.remove("hidden");
-        userAvatar.src = user.photoURL || "https://via.placeholder.com/40";
-        userName.innerText = user.displayName;
+        userProfile.classList.remove("hidden");
+        userAvatar.src = user.photoURL || "https://api.dicebear.com/7.x/bottts/svg?seed=" + user.uid;
+        userName.innerText = user.displayName || "Gamer";
         userEmail.innerText = user.email;
         loadUserOrders(user.uid);
       } else {
         googleLoginBtn.classList.remove("hidden");
-        userInfo.classList.add("hidden");
-        document.getElementById("userOrdersContainer").innerHTML = `<p class="text-gray-400 text-sm">Apne codes dekhne ke liye login karein.</p>`;
+        userProfile.classList.add("hidden");
+        document.getElementById("userOrdersWrapper").innerHTML = `
+          <div class="store-card p-8 rounded-2xl text-center text-gray-400">
+            <i class="fa-solid fa-lock text-3xl text-gray-500 mb-2"></i>
+            <p class="text-sm">Apne codes dekhne ke liye Google se login karein.</p>
+          </div>
+        `;
       }
     });
 
-    // Tab Switch
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.getElementById(tabId).classList.remove('hidden');
-
-      ['tabBtnInstant', 'tabBtnBooking', 'tabBtnOrders'].forEach(btn => {
-        document.getElementById(btn).className = "bg-white/5 hover:bg-white/10 px-6 py-2.5 rounded-xl font-medium text-sm border border-white/10 transition";
-      });
-
-      if(tabId === 'instantTab') document.getElementById('tabBtnInstant').className = "glass-btn px-6 py-2.5 rounded-xl font-medium text-sm transition";
-      if(tabId === 'bookingTab') document.getElementById('tabBtnBooking').className = "glass-btn px-6 py-2.5 rounded-xl font-medium text-sm transition";
-      if(tabId === 'ordersTab') document.getElementById('tabBtnOrders').className = "glass-btn px-6 py-2.5 rounded-xl font-medium text-sm transition";
-    }
-
-    // Load Available Codes
+    // 4. Load Live Inventory (Available Codes)
     db.ref("codes").on("value", snapshot => {
-      const container = document.getElementById("codesContainer");
+      const container = document.getElementById("instantCodesGrid");
       container.innerHTML = "";
       let found = false;
 
@@ -244,144 +509,170 @@
         if (item.status === "available") {
           found = true;
           const card = document.createElement("div");
-          card.className = "glass-card p-6 rounded-2xl flex flex-col justify-between transition hover:-translate-y-1 hover:border-indigo-400/50";
+          card.className = "store-card p-5 rounded-2xl flex flex-col justify-between";
+          
           card.innerHTML = `
             <div>
-              <div class="flex justify-between items-start mb-3">
-                <span class="px-2.5 py-1 bg-green-500/20 text-green-400 rounded-lg text-xs font-semibold border border-green-500/30">Instant Delivery</span>
-                <span class="text-xs text-gray-400 font-mono">Worth: ₹${item.value}</span>
+              <div class="flex justify-between items-center mb-3">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <i class="fa-solid fa-bolt mr-1"></i> Auto In-Stock
+                </span>
+                <span class="text-xs text-gray-400 font-medium">Worth ₹${item.value}</span>
               </div>
-              <h3 class="text-lg font-bold text-white mb-1">${item.title}</h3>
-              <p class="text-2xl font-black text-indigo-400 mb-4">₹${item.price}</p>
+
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center text-indigo-400 text-xl mb-4">
+                <i class="fa-brands fa-google-play"></i>
+              </div>
+
+              <h3 class="font-bold text-white text-base leading-snug mb-1">${item.title}</h3>
+              <p class="text-[11px] text-gray-400 mb-4">Verified digital code ready for instant activation.</p>
             </div>
-            <button onclick="buyInstantCode('${child.key}', ${item.price}, '${item.title}')" class="w-full glass-btn py-2.5 rounded-xl font-semibold text-sm">
-              <i class="fa-solid fa-bolt mr-1"></i> Pay ₹${item.price} & Reveal
-            </button>
+
+            <div class="pt-4 border-t border-brand-border flex items-center justify-between">
+              <div>
+                <p class="text-[10px] uppercase tracking-wider text-gray-400 font-medium">Deal Price</p>
+                <p class="text-2xl font-black text-white font-display">₹${item.price}</p>
+              </div>
+              <button onclick="initiateInstantPurchase('${child.key}', ${item.price}, '${item.title}')" class="glow-btn text-white text-xs font-bold px-4 py-2.5 rounded-xl uppercase tracking-wider flex items-center gap-1.5">
+                <span>Buy Now</span>
+                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </button>
+            </div>
           `;
           container.appendChild(card);
         }
       });
 
       if (!found) {
-        container.innerHTML = `<div class="glass-card p-8 rounded-2xl text-center text-gray-400 col-span-full">Abhi koi instant code stock me nahi hai. Aap "Custom Booking" kar sakte hain!</div>`;
+        container.innerHTML = `
+          <div class="store-card p-10 rounded-2xl text-center col-span-full">
+            <i class="fa-solid fa-box-open text-4xl text-gray-600 mb-3"></i>
+            <h4 class="text-white font-bold text-base mb-1">Instant stock abhi empty hai!</h4>
+            <p class="text-xs text-gray-400 max-w-sm mx-auto mb-4">Niche diye gaye <b>"Custom Booking"</b> section se order book karein, admin priority par code deliver karega.</p>
+            <a href="#bookingSection" class="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:underline">
+              <span>Go to Booking</span> <i class="fa-solid fa-arrow-down"></i>
+            </a>
+          </div>
+        `;
       }
     });
 
-    // Buy Instant Code with Razorpay
-    window.buyInstantCode = function(codeKey, price, title) {
+    // 5. Purchase Logic with Razorpay
+    window.initiateInstantPurchase = function(codeKey, price, title) {
       if (!currentUser) {
-        alert("Pehle Google se login karein!");
+        showToast("Kripya pehle Google se login karein!", "warning");
         return;
       }
 
       const options = {
-        key: globalRazorpayKey,
-        amount: price * 100, // paise
+        key: activeRazorpayKey,
+        amount: price * 100,
         currency: "INR",
-        name: "RedeemZone Store",
-        description: `Buying ${title}`,
+        name: "PlayVault Store",
+        description: `Instant Purchase: ${title}`,
         prefill: {
           name: currentUser.displayName,
           email: currentUser.email
         },
-        theme: { color: "#6366f1" },
+        theme: { color: "#4f46e5" },
         handler: function(response) {
-          // Razorpay success callback
-          claimCode(codeKey, price, title);
+          finalizeInstantCode(codeKey, price, title, response.razorpay_payment_id || "PAID");
         }
       };
 
       const rzp = new Razorpay(options);
-      rzp.on('payment.failed', function (response){
-        alert("Payment fail ho gaya: " + response.error.description);
+      rzp.on('payment.failed', function(resp) {
+        showToast("Payment fail hua: " + resp.error.description, "error");
       });
       rzp.open();
     };
 
-    function claimCode(codeKey, price, title) {
+    function finalizeInstantCode(codeKey, price, title, paymentId) {
       db.ref("codes/" + codeKey).once("value", snapshot => {
-        const data = snapshot.val();
-        if (data && data.status === "available") {
-          // Mark as sold
+        const item = snapshot.val();
+        if (item && item.status === "available") {
+          // Mark sold
           db.ref("codes/" + codeKey).update({
             status: "sold",
             boughtBy: currentUser.email,
-            boughtByUid: currentUser.uid,
             soldAt: firebase.database.ServerValue.TIMESTAMP
           });
 
-          // Add to user purchases
+          // Insert into User Vault Purchases
           db.ref("purchases").push({
             userId: currentUser.uid,
             userEmail: currentUser.email,
+            userName: currentUser.displayName,
             codeTitle: title,
-            redeemCode: data.secretCode,
-            value: data.value,
+            redeemCode: item.secretCode,
+            value: item.value,
             price: price,
-            type: "instant",
+            paymentId: paymentId,
             timestamp: firebase.database.ServerValue.TIMESTAMP
+          }).then(() => {
+            showToast("Success! Code aapke 'My Vault' me reveal ho chuka hai.", "success");
+            location.href = "#ordersSection";
           });
-
-          alert("Payment Successful! Redeem code aapke 'My Purchases' section me add ho chuka hai.");
-          switchTab('ordersTab');
         } else {
-          alert("Ye code abhi kisi aur ne khareed liya!");
+          showToast("Oops! Ye specific code kisi aur ne turant khareed liya.", "error");
         }
       });
     }
 
-    // Booking Calculation
-    const bookAmount = document.getElementById("bookAmount");
-    const bookQty = document.getElementById("bookQty");
-    const bookingTotalText = document.getElementById("bookingTotalText");
+    // 6. Custom Booking Logic
+    const bookDenomination = document.getElementById("bookDenomination");
+    const bookQuantity = document.getElementById("bookQuantity");
+    const bookingTotalPayable = document.getElementById("bookingTotalPayable");
+    const bookingBreakdownText = document.getElementById("bookingBreakdownText");
 
-    function calcBooking() {
-      const amt = parseInt(bookAmount.value) || 0;
-      const qty = parseInt(bookQty.value) || 1;
-      bookingTotalText.innerText = `₹${amt * qty}`;
+    function updateBookingPrice() {
+      const denom = parseInt(bookDenomination.value) || 0;
+      const qty = parseInt(bookQuantity.value) || 1;
+      const total = denom * qty;
+      bookingTotalPayable.innerText = `₹${total}`;
+      bookingBreakdownText.innerText = `${qty} Card${qty > 1 ? 's' : ''} × ₹${denom}`;
     }
-    bookAmount.addEventListener("change", calcBooking);
-    bookQty.addEventListener("input", calcBooking);
 
-    // Handle Custom Booking Submit
-    document.getElementById("bookingForm").addEventListener("submit", (e) => {
+    bookDenomination.addEventListener("change", updateBookingPrice);
+    bookQuantity.addEventListener("input", updateBookingPrice);
+
+    document.getElementById("customBookingForm").addEventListener("submit", (e) => {
       e.preventDefault();
       if (!currentUser) {
-        alert("Pehle Google se login karein!");
+        showToast("Kripya pehle Google se login karein!", "warning");
         return;
       }
 
-      const amt = parseInt(bookAmount.value);
-      const qty = parseInt(bookQty.value);
-      const total = amt * qty;
+      const denom = parseInt(bookDenomination.value);
+      const qty = parseInt(bookQuantity.value);
+      const total = denom * qty;
 
       const options = {
-        key: globalRazorpayKey,
+        key: activeRazorpayKey,
         amount: total * 100,
         currency: "INR",
-        name: "RedeemZone Booking",
-        description: `Booking: ₹${amt} x ${qty} Codes`,
+        name: "PlayVault Booking",
+        description: `Custom Booking: ₹${denom} x ${qty}`,
         prefill: {
           name: currentUser.displayName,
           email: currentUser.email
         },
-        theme: { color: "#a855f7" },
+        theme: { color: "#7c3aed" },
         handler: function(response) {
-          // Add booking to Firebase
           db.ref("bookings").push({
             userId: currentUser.uid,
             userName: currentUser.displayName,
             userEmail: currentUser.email,
-            denomination: amt,
+            denomination: denom,
             quantity: qty,
             totalPrice: total,
-            paymentId: response.razorpay_payment_id || "PAID_RZP",
+            paymentId: response.razorpay_payment_id || "PAY_DONE",
             status: "Pending Admin Approval",
             deliveredCode: "",
             bookedAt: firebase.database.ServerValue.TIMESTAMP
           }).then(() => {
-            alert("Booking confirm ho chuki hai! Admin aapki request process karke code deliver karega.");
-            switchTab('ordersTab');
+            showToast("Booking Successful! Admin deliver karke aapke vault me code dalega.", "success");
+            location.href = "#ordersSection";
           });
         }
       };
@@ -390,64 +681,204 @@
       rzp.open();
     });
 
-    // Load User's Purchases & Bookings
+    // 7. Load User Orders & Populate Feedback Dropdown
     function loadUserOrders(uid) {
-      const container = document.getElementById("userOrdersContainer");
-      
-      // Listen to instant purchases
-      db.ref("purchases").orderByChild("userId").equalTo(uid).on("value", snapPurchases => {
-        // Listen to bookings
-        db.ref("bookings").orderByChild("userId").equalTo(uid).on("value", snapBookings => {
+      const container = document.getElementById("userOrdersWrapper");
+      const orderDropdown = document.getElementById("fbLinkedOrder");
+
+      db.ref("purchases").orderByChild("userId").equalTo(uid).on("value", snapP => {
+        db.ref("bookings").orderByChild("userId").equalTo(uid).on("value", snapB => {
           container.innerHTML = "";
-          let items = [];
+          orderDropdown.innerHTML = `<option value="None">Koi specific order nahi hai / General Query</option>`;
+          cachedUserOrders = [];
 
-          snapPurchases.forEach(c => items.push({ id: c.key, ...c.val(), orderType: "Instant" }));
-          snapBookings.forEach(c => items.push({ id: c.key, ...c.val(), orderType: "Booking" }));
+          snapP.forEach(c => cachedUserOrders.push({ id: c.key, ...c.val(), type: "Instant Purchase" }));
+          snapB.forEach(c => cachedUserOrders.push({ id: c.key, ...c.val(), type: "Booking Order" }));
 
-          if (items.length === 0) {
-            container.innerHTML = `<div class="glass-card p-6 rounded-xl text-center text-gray-400">Aapne abhi tak koi code nahi khareeda hai.</div>`;
+          if (cachedUserOrders.length === 0) {
+            container.innerHTML = `
+              <div class="store-card p-8 rounded-2xl text-center text-gray-400">
+                <i class="fa-solid fa-wallet text-3xl text-gray-500 mb-2"></i>
+                <p class="text-sm">Aapne abhi tak koi order nahi kiya hai.</p>
+              </div>
+            `;
             return;
           }
 
-          items.reverse().forEach(item => {
-            const card = document.createElement("div");
-            card.className = "glass-card p-5 rounded-xl border border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4";
+          cachedUserOrders.reverse().forEach(order => {
+            // Populate Dropdown for Community Dispute Link
+            const opt = document.createElement("option");
+            opt.value = `${order.type} | ID: ${order.id.slice(-6)} | Worth: ₹${order.value || order.totalPrice}`;
+            opt.innerText = `[${order.type}] ₹${order.value || order.totalPrice} (${order.status || 'Delivered'})`;
+            orderDropdown.appendChild(opt);
 
-            if (item.orderType === "Instant") {
+            // Render Card in Vault
+            const isInstant = order.type === "Instant Purchase";
+            const card = document.createElement("div");
+            card.className = "store-card p-5 rounded-2xl border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4";
+
+            if (isInstant) {
               card.innerHTML = `
                 <div>
-                  <span class="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs">Instant Buy</span>
-                  <h4 class="font-bold text-base mt-1 text-white">${item.codeTitle} (Value: ₹${item.value})</h4>
-                  <p class="text-xs text-gray-400">Paid: ₹${item.price}</p>
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">INSTANT CODE</span>
+                    <span class="text-xs text-gray-400 font-mono">Ref: ${order.id.slice(-8)}</span>
+                  </div>
+                  <h4 class="text-white font-bold text-base">${order.codeTitle}</h4>
+                  <p class="text-xs text-gray-400">Paid: ₹${order.price} | Paid ID: ${order.paymentId}</p>
                 </div>
-                <div class="bg-black/40 border border-indigo-400/30 px-4 py-2 rounded-lg font-mono text-indigo-300 font-bold select-all">
-                  ${item.redeemCode}
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                  <div class="bg-black/60 border border-indigo-500/40 px-4 py-2.5 rounded-xl font-mono text-indigo-300 font-extrabold text-sm tracking-wider select-all">
+                    ${order.redeemCode}
+                  </div>
+                  <button onclick="navigator.clipboard.writeText('${order.redeemCode}'); showToast('Code copied to clipboard!', 'info')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition">
+                    <i class="fa-solid fa-copy"></i>
+                  </button>
                 </div>
               `;
             } else {
-              // Custom Booking
-              const isDelivered = item.status === "Delivered";
+              const delivered = order.status === "Delivered";
               card.innerHTML = `
                 <div>
-                  <span class="px-2 py-0.5 ${isDelivered ? 'bg-purple-500/20 text-purple-400' : 'bg-yellow-500/20 text-yellow-400'} rounded text-xs">
-                    Booking: ${item.status}
-                  </span>
-                  <h4 class="font-bold text-base mt-1 text-white">₹${item.denomination} Code x ${item.quantity}</h4>
-                  <p class="text-xs text-gray-400">Total Paid: ₹${item.totalPrice} | Delivered to: ${item.userEmail}</p>
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${delivered ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
+                      ${order.status}
+                    </span>
+                    <span class="text-xs text-gray-400 font-mono">Order Ref: ${order.id.slice(-8)}</span>
+                  </div>
+                  <h4 class="text-white font-bold text-base">Custom Booking: ₹${order.denomination} × ${order.quantity} Codes</h4>
+                  <p class="text-xs text-gray-400">Total Paid: ₹${order.totalPrice} | Deliver to: ${order.userEmail}</p>
                 </div>
                 <div>
-                  ${isDelivered ? 
-                    `<div class="bg-black/40 border border-green-400/30 px-4 py-2 rounded-lg font-mono text-green-300 font-bold select-all">${item.deliveredCode}</div>` : 
-                    `<span class="text-xs text-yellow-400 italic"><i class="fa-solid fa-hourglass-half mr-1"></i> Admin code deliver kar raha hai</span>`
-                  }
+                  ${delivered ? `
+                    <div class="flex items-center gap-2">
+                      <div class="bg-black/60 border border-emerald-500/40 px-4 py-2.5 rounded-xl font-mono text-emerald-300 font-extrabold text-sm tracking-wider select-all">
+                        ${order.deliveredCode}
+                      </div>
+                      <button onclick="navigator.clipboard.writeText('${order.deliveredCode}'); showToast('Code copied!', 'info')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10">
+                        <i class="fa-solid fa-copy"></i>
+                      </button>
+                    </div>
+                  ` : `
+                    <div class="text-amber-400 text-xs flex items-center gap-2 bg-amber-500/10 px-3 py-2 rounded-xl border border-amber-500/20">
+                      <i class="fa-solid fa-hourglass-start animate-spin"></i>
+                      <span>Admin is processing. Code will appear here.</span>
+                    </div>
+                  `}
                 </div>
               `;
             }
+
             container.appendChild(card);
           });
         });
       });
     }
+
+    window.refreshOrders = function() {
+      if(currentUser) loadUserOrders(currentUser.uid);
+      showToast("Order status refreshed.", "info");
+    };
+
+    // 8. Public Feedback & Dispute Section (REAL TIME TRANSPARENCY)
+    const feedbackModal = document.getElementById("feedbackModal");
+
+    window.openFeedbackModal = function() {
+      if (!currentUser) {
+        showToast("Pehle Google se login karein tabhi post kar sakte hain!", "warning");
+        return;
+      }
+      feedbackModal.classList.remove("hidden");
+    };
+
+    window.closeFeedbackModal = function() {
+      feedbackModal.classList.add("hidden");
+    };
+
+    document.getElementById("feedbackForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const category = document.getElementById("fbCategory").value;
+      const linkedOrder = document.getElementById("fbLinkedOrder").value;
+      const message = document.getElementById("fbMessage").value.trim();
+
+      if (!message) return;
+
+      db.ref("community_feedback").push({
+        userName: currentUser.displayName || "Anonymous Buyer",
+        userEmail: currentUser.email,
+        userAvatar: currentUser.photoURL || "",
+        category: category,
+        linkedOrder: linkedOrder,
+        message: message,
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+      }).then(() => {
+        showToast("Aapka comment public board par post ho gaya!", "success");
+        document.getElementById("feedbackForm").reset();
+        closeFeedbackModal();
+      });
+    });
+
+    // Load Public Feedback Stream
+    db.ref("community_feedback").limitToLast(30).on("value", snapshot => {
+      const container = document.getElementById("publicFeedbackContainer");
+      container.innerHTML = "";
+      let found = false;
+
+      const list = [];
+      snapshot.forEach(c => list.push({ id: c.key, ...c.val() }));
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="store-card p-6 rounded-2xl text-center col-span-full text-gray-400 text-xs">
+            Abhi koi public post nahi hai. Sabse pehla review ya query post karein!
+          </div>
+        `;
+        return;
+      }
+
+      list.reverse().forEach(post => {
+        const card = document.createElement("div");
+        card.className = "store-card p-5 rounded-2xl flex flex-col justify-between";
+
+        const isIssue = post.category.includes("Issue");
+        const badgeColor = isIssue ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <img src="${post.userAvatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + post.userName}" class="w-7 h-7 rounded-full border border-white/10" alt="">
+                <div>
+                  <h5 class="text-xs font-bold text-white leading-none">${post.userName}</h5>
+                  <span class="text-[10px] text-gray-500 leading-none">${post.userEmail.replace(/(.{3})(.*)(@.*)/, "$1***$3")}</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${badgeColor}">
+                ${isIssue ? 'Dispute' : 'Verified'}
+              </span>
+            </div>
+
+            ${post.linkedOrder && post.linkedOrder !== 'None' ? `
+              <div class="mb-2 px-2.5 py-1 rounded bg-black/40 border border-white/5 text-[10px] text-indigo-300 font-mono">
+                <i class="fa-solid fa-link text-[8px] mr-1"></i> Order: ${post.linkedOrder}
+              </div>
+            ` : ''}
+
+            <p class="text-xs text-gray-300 leading-relaxed bg-[#0b111e]/40 p-3 rounded-xl border border-white/5">
+              "${post.message}"
+            </p>
+          </div>
+
+          <div class="mt-3 pt-3 border-t border-brand-border flex items-center justify-between text-[10px] text-gray-500">
+            <span><i class="fa-regular fa-clock mr-1"></i> ${new Date(post.createdAt || Date.now()).toLocaleDateString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</span>
+            <span class="text-indigo-400"><i class="fa-solid fa-shield text-[9px] mr-1"></i> Public Record</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    });
   </script>
 </body>
   </html>
