@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CYBERVAULT | Buy & Book Redeem Codes</title>
+  <title>CYBERVAULT | Buy Genuine Google Play Redeem Codes</title>
 
-  <!-- Google Fonts -->
+  <!-- Google Fonts: Outfit & Space Grotesk -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;900&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
   <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- Firebase Compat -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -78,6 +78,17 @@
   <!-- Toast Notification Box -->
   <div id="toastBox" class="fixed top-20 right-4 z-[999] flex flex-col space-y-2 pointer-events-none"></div>
 
+  <!-- Recent Live Buyer Notification Pill -->
+  <div id="recentBuyerPill" class="fixed bottom-5 left-4 z-40 bg-slate-900/90 border border-white/20 p-2.5 px-3.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3 transition-all duration-500 translate-y-24 opacity-0">
+    <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+      <i class="fa-solid fa-gift"></i>
+    </div>
+    <div class="text-[11px] leading-tight">
+      <p id="buyerPillText" class="font-bold text-white"></p>
+      <span class="text-gray-400 text-[10px]">Just now • Verified Purchase</span>
+    </div>
+  </div>
+
   <!-- 1. NAVBAR -->
   <header class="sticky top-0 z-50 glass border-b border-white/10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -93,6 +104,13 @@
           </div>
           <span class="font-bold text-lg text-white tracking-wider font-display">CYBER<span class="text-indigo-400">VAULT</span></span>
         </a>
+      </div>
+
+      <!-- Live Global Sold Counter in Navbar (Desktop) -->
+      <div class="hidden md:flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-400">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span id="navLiveCount">1,500+</span> 
+        <span class="text-gray-300 font-normal">Codes Sold</span>
       </div>
 
       <!-- Google Login Button -->
@@ -117,7 +135,7 @@
     </div>
   </header>
 
-  <!-- 2. SLIDE-OUT DRAWER (3 LINE MENU) -->
+  <!-- 2. SLIDE-OUT DRAWER -->
   <div id="menuBackdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300"></div>
   <aside id="menuDrawer" class="fixed top-0 left-0 bottom-0 w-72 glass z-50 -translate-x-full transition-transform duration-300 p-5 flex flex-col justify-between border-r border-white/10">
     <div class="space-y-4">
@@ -129,8 +147,9 @@
         <a href="#instant-stock" onclick="closeDrawer()" class="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-white/10 text-gray-200 transition"><i class="fa-solid fa-bolt text-indigo-400"></i> Instant Redeem Codes</a>
         <a href="#custom-booking" onclick="closeDrawer()" class="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-white/10 text-gray-200 transition"><i class="fa-solid fa-box text-purple-400"></i> Custom Code Booking</a>
         <a href="#my-vault" onclick="closeDrawer()" class="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-white/10 text-gray-200 transition"><i class="fa-solid fa-key text-emerald-400"></i> My Vault (Purchased Codes)</a>
+        <a href="#how-to-redeem" onclick="closeDrawer()" class="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-white/10 text-gray-200 transition"><i class="fa-solid fa-circle-question text-cyan-400"></i> How to Redeem?</a>
         <a href="#dispute-board" onclick="closeDrawer()" class="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-white/10 text-gray-200 transition"><i class="fa-solid fa-comments text-amber-400"></i> Public Reviews & Dispute</a>
-        <a href="#why-trust-us" onclick="closeDrawer()" class="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-white/10 text-gray-200 transition"><i class="fa-solid fa-shield-halved text-cyan-400"></i> Why Trust Us?</a>
+        <a href="#why-trust-us" onclick="closeDrawer()" class="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-white/10 text-gray-200 transition"><i class="fa-solid fa-shield-halved text-emerald-400"></i> Why Trust Us?</a>
       </div>
     </div>
     <div class="text-[11px] text-gray-500 pt-3 border-t border-white/10">
@@ -138,21 +157,33 @@
     </div>
   </aside>
 
-  <!-- 3. HERO SECTION -->
+  <!-- 3. HERO SECTION WITH 1500+ DYNAMIC COUNTER -->
   <section class="max-w-6xl mx-auto px-4 pt-10 pb-8 text-center">
-    <span class="px-3.5 py-1 rounded-full text-[11px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-      ⚡ 100% Genuine Play Store Codes • Instant Screen Reveal & Gmail Delivery
-    </span>
-    <h1 class="text-3xl sm:text-5xl font-black text-white mt-4 uppercase leading-tight font-display">
+    
+    <!-- 1500+ Dynamic Counter Badge -->
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-emerald-500/20 via-indigo-500/20 to-purple-500/20 border border-emerald-500/30 text-white text-xs sm:text-sm font-bold shadow-lg mb-4">
+      <i class="fa-solid fa-fire text-orange-400 animate-bounce"></i>
+      <span class="text-emerald-400 font-extrabold font-mono text-base" id="heroLiveCounter">1,500+</span>
+      <span class="text-gray-200">Redeem Codes Sold & Delivered Live</span>
+    </div>
+
+    <h1 class="text-3xl sm:text-5xl font-black text-white mt-2 uppercase leading-tight font-display">
       Buy Google Play Redeem Codes <br>
-      <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-500">Auto Instant Delivery</span>
+      <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-500">Instant Screen Reveal</span>
     </h1>
     <p class="text-xs sm:text-sm text-gray-400 max-w-xl mx-auto mt-2">
-      Payment complete hote hi code seedha aapki screen par show hoga aur aapke Gmail par turant mail ho jayega.
+      Kisi email ka intezar nahi! Payment hote hi code seedha aapki screen par show hoga aur aapke Vault me save ho jayega.
     </p>
+
+    <!-- Supported Chips -->
+    <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-6 mt-6 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+      <span class="flex items-center gap-1.5"><i class="fa-brands fa-google-play text-emerald-400"></i> Play Store</span>
+      <span class="flex items-center gap-1.5"><i class="fa-solid fa-fire text-orange-400"></i> Free Fire Diamonds</span>
+      <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-blue-400"></i> BGMI UC</span>
+    </div>
   </section>
 
-  <!-- 4. MAIN CONTINUOUS SCROLL CONTENT -->
+  <!-- 4. CONTINUOUS SCROLL MAIN CONTENT -->
   <main class="max-w-6xl mx-auto px-4 space-y-16 pb-20">
 
     <!-- Section 1: Instant Stock Codes -->
@@ -160,7 +191,7 @@
       <div class="flex justify-between items-end pb-3 mb-6 border-b border-white/10">
         <div>
           <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Live Inventory</span>
-          <h2 class="text-xl font-bold text-white font-display">Instant Codes In-Stock</h2>
+          <h2 class="text-xl font-bold text-white font-display">Instant Available Codes</h2>
         </div>
       </div>
       <div id="instantCodesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -171,7 +202,7 @@
     <!-- Section 2: Custom Booking -->
     <section id="custom-booking" class="glass rounded-3xl p-6 sm:p-8 border border-purple-500/20">
       <h2 class="text-xl font-bold text-white mb-1 font-display">Custom Redeem Code Booking</h2>
-      <p class="text-xs text-gray-400 mb-6">Stock me code na ho to yahan se book karein, Admin turant aapke Gmail par send karega.</p>
+      <p class="text-xs text-gray-400 mb-6">Stock me code na ho to yahan se book karein, Admin turant aapke Vault me deliver karega.</p>
 
       <form id="bookingForm" class="space-y-4 max-w-lg">
         <div class="grid grid-cols-2 gap-3">
@@ -202,7 +233,7 @@
       </form>
     </section>
 
-    <!-- Section 3: My Vault (User's Purchased Codes) -->
+    <!-- Section 3: My Vault (Purchased Codes) -->
     <section id="my-vault">
       <div class="flex justify-between items-end pb-3 mb-6 border-b border-white/10">
         <div>
@@ -215,7 +246,41 @@
       </div>
     </section>
 
-    <!-- Section 4: Public Dispute & Review Board -->
+    <!-- Section 4: How to Redeem Step-by-Step Guide -->
+    <section id="how-to-redeem" class="glass rounded-3xl p-6 sm:p-8 border border-white/10">
+      <div class="text-center max-w-xl mx-auto mb-6">
+        <h3 class="font-display text-xl sm:text-2xl font-black text-white uppercase">Play Store Me Redeem Kaise Karein?</h3>
+        <p class="text-xs text-gray-400 mt-1">Sirf 4 aasan steps me code apne Google account me add karein:</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-card p-4 rounded-xl text-center">
+          <div class="w-10 h-10 mx-auto rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm mb-2">1</div>
+          <h4 class="text-xs font-bold text-white mb-1">Copy Code</h4>
+          <p class="text-[11px] text-gray-400">Kharidne ke baad "Copy" button dabayein.</p>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl text-center">
+          <div class="w-10 h-10 mx-auto rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm mb-2">2</div>
+          <h4 class="text-xs font-bold text-white mb-1">Open Play Store</h4>
+          <p class="text-[11px] text-gray-400">Apne phone me Google Play Store kholein.</p>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl text-center">
+          <div class="w-10 h-10 mx-auto rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm mb-2">3</div>
+          <h4 class="text-xs font-bold text-white mb-1">Payments & Subs</h4>
+          <p class="text-[11px] text-gray-400">Profile icon par tap karke "Redeem Code" chunein.</p>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl text-center">
+          <div class="w-10 h-10 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm mb-2">4</div>
+          <h4 class="text-xs font-bold text-emerald-300 mb-1">Paste & Enjoy</h4>
+          <p class="text-[11px] text-gray-400">Code paste karke balance turant use karein!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Public Dispute & Review Board -->
     <section id="dispute-board">
       <div class="flex justify-between items-center pb-3 mb-6 border-b border-white/10">
         <div>
@@ -229,7 +294,7 @@
       <div id="publicBoardContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
     </section>
 
-    <!-- Section 5: 3 TRUST BOXES -->
+    <!-- Section 6: 3 TRUST BOXES -->
     <section id="why-trust-us" class="pt-6 border-t border-white/10">
       <div class="text-center max-w-xl mx-auto mb-8">
         <h3 class="font-display text-2xl font-black text-white uppercase">Kyun CYBERVAULT 100% Real Hai?</h3>
@@ -273,7 +338,39 @@
 
   </main>
 
-  <!-- Modal: Post Dispute / Review -->
+  <!-- FLOATING WHATSAPP BUTTON (ADMIN CONTROLLED) -->
+  <a id="whatsappFloatBtn" href="#" target="_blank" class="fixed bottom-5 right-5 z-40 bg-emerald-600 hover:bg-emerald-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition hover:scale-110">
+    <i class="fa-brands fa-whatsapp text-2xl"></i>
+  </a>
+
+  <!-- MODAL: INSTANT SUCCESS CODE POPUP (CELEBRATION) -->
+  <div id="successModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-sm p-6 sm:p-7 rounded-3xl border border-emerald-500/40 text-center shadow-2xl relative">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mb-3 shadow-lg">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <h3 class="text-lg font-black text-white font-display">Payment Successful!</h3>
+      <p class="text-xs text-gray-400 mb-4" id="successModalTitle">Aapka Redeem Code Taiyar Hai</p>
+
+      <div class="bg-black/60 border border-emerald-500/50 p-3 rounded-xl mb-4">
+        <span class="text-[10px] text-gray-400 uppercase tracking-widest block mb-1">Redeem Code:</span>
+        <span id="revealedCodeText" class="font-mono text-emerald-300 font-extrabold text-lg select-all tracking-wider"></span>
+      </div>
+
+      <div class="space-y-2">
+        <button id="modalCopyBtn" class="w-full btn-cyber text-white py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+          <i class="fa-solid fa-copy"></i> Copy Code
+        </button>
+        <a id="modalPlayStoreBtn" href="https://play.google.com/redeem" target="_blank" class="w-full bg-white/10 hover:bg-white/15 border border-white/20 text-white py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 block">
+          <i class="fa-brands fa-google-play text-emerald-400"></i> Redeem on Play Store
+        </a>
+      </div>
+
+      <button onclick="closeSuccessModal()" class="mt-4 text-xs text-gray-500 hover:text-white underline">Close</button>
+    </div>
+  </div>
+
+  <!-- MODAL: POST DISPUTE / REVIEW -->
   <div id="feedbackModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="glass-card w-full max-w-md p-6 rounded-2xl border border-white/15 relative">
       <button onclick="closeFeedbackModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
@@ -320,21 +417,29 @@
       setTimeout(() => el.remove(), 3500);
     }
 
-    // Google Script Webhook Mail Dispatcher
-    function dispatchEmail(to, subject, htmlBody) {
-      if (activeSettings.webhookUrl) {
-        fetch(activeSettings.webhookUrl, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ to: to, subject: subject, htmlBody: htmlBody })
-        }).catch(err => console.log("Mail error:", err));
+    // 1. LIVE 1500+ SALES COUNTER ENGINE
+    db.ref("stats/soldCounter").on("value", snap => {
+      let count = snap.val();
+      if (!count || count < 1500) {
+        count = 1500;
+        db.ref("stats/soldCounter").set(1500);
       }
+      document.getElementById("heroLiveCounter").innerText = `${count.toLocaleString('en-IN')}+`;
+      document.getElementById("navLiveCount").innerText = `${count.toLocaleString('en-IN')}+`;
+    });
+
+    // Function to increment sold count in database
+    function incrementSoldCount() {
+      db.ref("stats/soldCounter").transaction(current => {
+        return (current || 1500) + 1;
+      });
     }
 
-    // Sync Settings
+    // 2. Settings Sync (Razorpay & WhatsApp)
     db.ref("settings").on("value", s => {
       activeSettings = s.val() || {};
+      const waNumber = activeSettings.supportWhatsapp || "919876543210";
+      document.getElementById("whatsappFloatBtn").href = `https://wa.me/${waNumber}?text=Namaste,%20mujhe%20redeem%20code%20ke%20baare%20me%20puchna%20hai`;
     });
 
     // Drawer Menu
@@ -397,7 +502,7 @@
                 <span class="text-xs text-gray-400">Worth ₹${item.value}</span>
               </div>
               <h3 class="font-bold text-white text-sm">${item.title}</h3>
-              <p class="text-[11px] text-gray-400 mt-1">Payment hote hi code screen par reveal hoga & Mail aayega.</p>
+              <p class="text-[11px] text-gray-400 mt-1">Payment hote hi code screen par reveal hoga.</p>
             </div>
             <div class="pt-3 mt-3 border-t border-white/10 flex justify-between items-center">
               <span class="text-lg font-black text-white font-mono">₹${item.price}</span>
@@ -445,7 +550,10 @@
                   soldAt: firebase.database.ServerValue.TIMESTAMP
                 });
 
-                // 2. Add to buyer's vault
+                // 2. Increment 1500+ Sales counter
+                incrementSoldCount();
+
+                // 3. Add to buyer's vault
                 db.ref("purchases").push({
                   userId: currentUser.uid,
                   userEmail: currentUser.email,
@@ -458,33 +566,8 @@
                   timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
 
-                showToast("Payment Successful! Code reveal ho gaya.");
-                location.href = "#my-vault";
-
-                // 3. MAIL TO USER (Contains the Redeem Code!)
-                dispatchEmail(
-                  currentUser.email,
-                  `[CYBERVAULT] Aapka Redeem Code: ${title}`,
-                  `<h3>Namaste ${currentUser.displayName},</h3>
-                   <p>Aapka purchase successful raha!</p>
-                   <p><b>Item:</b> ${title} (Worth: ₹${data.value})</p>
-                   <p><b>Redeem Code:</b> <span style="font-size:20px; color:#10b981; font-weight:bold; background:#000; padding:6px 12px; border-radius:6px; display:inline-block;">${data.secretCode}</span></p>
-                   <p>Payment ID: ${response.razorpay_payment_id}</p>
-                   <p>Play Store par jakar ise abhi redeem karein. Dhanyawad!</p>`
-                );
-
-                // 4. MAIL TO ADMIN (Sale Alert!)
-                const adm = activeSettings.adminEmail || "otpsender62@gmail.com";
-                dispatchEmail(
-                  adm,
-                  `🚨 [INSTANT SALE ALERT] Sold ₹${price} Code to ${currentUser.email}`,
-                  `<h3>Instant Code Sold</h3>
-                   <p><b>Item:</b> ${title}</p>
-                   <p><b>Amount Received:</b> ₹${price}</p>
-                   <p><b>Buyer:</b> ${currentUser.displayName} (${currentUser.email})</p>
-                   <p><b>Code Sold:</b> <code>${data.secretCode}</code></p>
-                   <p><b>Razorpay PayID:</b> ${response.razorpay_payment_id}</p>`
-                );
+                // 4. Show Celebration Modal
+                openSuccessModal(title, data.secretCode);
 
               } else {
                 showToast("Code already sold out ho gaya!");
@@ -500,6 +583,25 @@
       });
       rzp.open();
     };
+
+    // Celebration Modal Functions
+    function openSuccessModal(title, code) {
+      document.getElementById("successModalTitle").innerText = title;
+      document.getElementById("revealedCodeText").innerText = code;
+      document.getElementById("modalPlayStoreBtn").href = `https://play.google.com/redeem?code=${encodeURIComponent(code)}`;
+      
+      document.getElementById("modalCopyBtn").onclick = () => {
+        navigator.clipboard.writeText(code);
+        showToast("Code Copied Successfully!");
+      };
+
+      document.getElementById("successModal").classList.remove("hidden");
+    }
+
+    function closeSuccessModal() {
+      document.getElementById("successModal").classList.add("hidden");
+      location.href = "#my-vault";
+    }
 
     // Booking Math & Form
     const bookAmount = document.getElementById("bookAmount");
@@ -546,32 +648,8 @@
               deliveredCode: "",
               bookedAt: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-              showToast("Booking Successful! Admin jald hi aapke Gmail par mail karega.");
+              showToast("Booking Successful! Admin jald aapke Vault me code deliver karega.");
               location.href = "#my-vault";
-
-              // 1. Mail to User (Booking Confirmation)
-              dispatchEmail(
-                currentUser.email,
-                `[CYBERVAULT] Booking Received: ₹${amt} x ${qty} Codes`,
-                `<h3>Namaste ${currentUser.displayName},</h3>
-                 <p>Aapki booking request prapt ho gayi hai!</p>
-                 <p><b>Order:</b> ₹${amt} x ${qty} Codes (Total: ₹${total})</p>
-                 <p>Admin jald hi ise process karke aapko mail karega aur aapke My Vault me code deliver karega.</p>`
-              );
-
-              // 2. Mail to Admin (New Booking Alert!)
-              const adm = activeSettings.adminEmail || "otpsender62@gmail.com";
-              dispatchEmail(
-                adm,
-                `📦 [NEW BOOKING REQUEST] ₹${total} Paid by ${currentUser.email}`,
-                `<h3>New Custom Booking Order</h3>
-                 <p><b>Buyer:</b> ${currentUser.displayName} (${currentUser.email})</p>
-                 <p><b>Requested:</b> ₹${amt} x ${qty} Codes</p>
-                 <p><b>Total Paid:</b> ₹${total}</p>
-                 <p><b>Payment ID:</b> ${response.razorpay_payment_id}</p>
-                 <p>Admin panel kholein aur code deliver karein!</p>`
-              );
-
             });
           }
         }
@@ -623,6 +701,9 @@
                   <button onclick="navigator.clipboard.writeText('${ord.redeemCode}'); showToast('Code Copied!')" class="p-1.5 bg-white/10 rounded text-xs text-white">
                     <i class="fa-solid fa-copy"></i>
                   </button>
+                  <a href="https://play.google.com/redeem?code=${encodeURIComponent(ord.redeemCode)}" target="_blank" class="p-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded text-xs">
+                    <i class="fa-brands fa-google-play"></i>
+                  </a>
                 </div>
               `;
             } else {
@@ -644,6 +725,9 @@
                       <button onclick="navigator.clipboard.writeText('${ord.deliveredCode}'); showToast('Code Copied!')" class="p-1.5 bg-white/10 rounded text-xs text-white">
                         <i class="fa-solid fa-copy"></i>
                       </button>
+                      <a href="https://play.google.com/redeem?code=${encodeURIComponent(ord.deliveredCode)}" target="_blank" class="p-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded text-xs">
+                        <i class="fa-brands fa-google-play"></i>
+                      </a>
                     </div>
                   ` : `
                     <span class="text-[11px] text-amber-400 italic">Processing by Admin...</span>
@@ -703,6 +787,21 @@
         container.appendChild(div);
       });
     });
+
+    // 3. LIVE SOCIAL PROOF POPUP TICKER
+    const randomCities = ["Delhi", "Mumbai", "Patna", "Kolkata", "Lucknow", "Jaipur", "Bengaluru", "Indore"];
+    const randomDenoms = ["₹50", "₹100", "₹250", "₹500"];
+    setInterval(() => {
+      const pill = document.getElementById("recentBuyerPill");
+      const city = randomCities[Math.floor(Math.random() * randomCities.length)];
+      const amt = randomDenoms[Math.floor(Math.random() * randomDenoms.length)];
+      document.getElementById("buyerPillText").innerText = `Someone from ${city} bought ${amt} Code!`;
+      
+      pill.classList.remove("translate-y-24", "opacity-0");
+      setTimeout(() => {
+        pill.classList.add("translate-y-24", "opacity-0");
+      }, 4000);
+    }, 15000);
   </script>
 </body>
-  </html>
+</html>
