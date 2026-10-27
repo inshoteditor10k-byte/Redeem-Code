@@ -23,9 +23,6 @@
   <!-- Razorpay Checkout -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-  <!-- SMTPJS (Direct Gmail Sender) -->
-  <script src="https://smtpjs.com/v3/smtp.js"></script>
-
   <style>
     body {
       background-color: #030712;
@@ -74,7 +71,7 @@
 </head>
 <body class="selection:bg-indigo-500">
 
-  <!-- Ambient Glowing Backgrounds -->
+  <!-- Glowing Orbs -->
   <div class="ambient-sphere top-0 left-10 bg-indigo-600/20 animate-pulse"></div>
   <div class="ambient-sphere bottom-0 right-10 bg-pink-600/15 animate-pulse"></div>
 
@@ -86,7 +83,6 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
       
       <div class="flex items-center space-x-3">
-        <!-- 3 Line Hamburger Menu -->
         <button id="menuBtn" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition">
           <i class="fa-solid fa-bars text-indigo-400"></i>
         </button>
@@ -156,7 +152,7 @@
     </p>
   </section>
 
-  <!-- 4. CONTINUOUS SCROLL MAIN CONTENT -->
+  <!-- 4. MAIN CONTINUOUS SCROLL CONTENT -->
   <main class="max-w-6xl mx-auto px-4 space-y-16 pb-20">
 
     <!-- Section 1: Instant Stock Codes -->
@@ -233,7 +229,7 @@
       <div id="publicBoardContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
     </section>
 
-    <!-- Section 5: RESTORED 3 TRUST BOXES -->
+    <!-- Section 5: 3 TRUST BOXES -->
     <section id="why-trust-us" class="pt-6 border-t border-white/10">
       <div class="text-center max-w-xl mx-auto mb-8">
         <h3 class="font-display text-2xl font-black text-white uppercase">Kyun CYBERVAULT 100% Real Hai?</h3>
@@ -242,7 +238,6 @@
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        <!-- Box 1 -->
         <div class="glass-card p-6 rounded-2xl">
           <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg mb-3">
             <i class="fa-solid fa-bolt"></i>
@@ -253,7 +248,6 @@
           </p>
         </div>
 
-        <!-- Box 2 -->
         <div class="glass-card p-6 rounded-2xl">
           <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg mb-3">
             <i class="fa-solid fa-bullhorn"></i>
@@ -264,7 +258,6 @@
           </p>
         </div>
 
-        <!-- Box 3 -->
         <div class="glass-card p-6 rounded-2xl">
           <div class="w-10 h-10 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center text-lg mb-3">
             <i class="fa-solid fa-shield-halved"></i>
@@ -327,23 +320,19 @@
       setTimeout(() => el.remove(), 3500);
     }
 
-    // Direct Gmail Dispatcher function
-    function sendDirectGmail(toEmail, toName, redeemCode, cardTitle) {
-      const sEmail = activeSettings.senderEmail || "otpsender62@gmail.com";
-      const sPass = (activeSettings.senderPass || "utejupongkblwg").replace(/\s+/g, '');
-
-      Email.send({
-        Host: "smtp.gmail.com",
-        Username: sEmail,
-        Password: sPass,
-        To: toEmail,
-        From: sEmail,
-        Subject: `[CYBERVAULT] Aapka Redeem Code Deliver Ho Chuka Hai: ${cardTitle}`,
-        Body: `Namaste ${toName},<br><br>Aapka purchase successful raha!<br><br><b>Item:</b> ${cardTitle}<br><b>Redeem Code:</b> <span style="font-size:18px; color:#10b981; font-weight:bold;">${redeemCode}</span><br><br>Play Store par jakar ise redeem karein.<br>Dhanyawad,<br>CYBERVAULT Team`
-      }).catch(err => console.log("SMTP Error:", err));
+    // Google Script Webhook Mail Dispatcher
+    function dispatchEmail(to, subject, htmlBody) {
+      if (activeSettings.webhookUrl) {
+        fetch(activeSettings.webhookUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: to, subject: subject, htmlBody: htmlBody })
+        }).catch(err => console.log("Mail error:", err));
+      }
     }
 
-    // Settings Sync
+    // Sync Settings
     db.ref("settings").on("value", s => {
       activeSettings = s.val() || {};
     });
@@ -449,14 +438,14 @@
               const data = snap.val();
               if (data && data.status === "available") {
                 
-                // Immediately Out of Stock
+                // 1. Immediately Out of Stock
                 db.ref("codes/" + codeKey).update({
                   status: "sold",
                   boughtBy: currentUser.email,
                   soldAt: firebase.database.ServerValue.TIMESTAMP
                 });
 
-                // Add to buyer's vault
+                // 2. Add to buyer's vault
                 db.ref("purchases").push({
                   userId: currentUser.uid,
                   userEmail: currentUser.email,
@@ -472,8 +461,30 @@
                 showToast("Payment Successful! Code reveal ho gaya.");
                 location.href = "#my-vault";
 
-                // DIRECT GMAIL DISPATCH
-                sendDirectGmail(currentUser.email, currentUser.displayName, data.secretCode, title);
+                // 3. MAIL TO USER (Contains the Redeem Code!)
+                dispatchEmail(
+                  currentUser.email,
+                  `[CYBERVAULT] Aapka Redeem Code: ${title}`,
+                  `<h3>Namaste ${currentUser.displayName},</h3>
+                   <p>Aapka purchase successful raha!</p>
+                   <p><b>Item:</b> ${title} (Worth: ₹${data.value})</p>
+                   <p><b>Redeem Code:</b> <span style="font-size:20px; color:#10b981; font-weight:bold; background:#000; padding:6px 12px; border-radius:6px; display:inline-block;">${data.secretCode}</span></p>
+                   <p>Payment ID: ${response.razorpay_payment_id}</p>
+                   <p>Play Store par jakar ise abhi redeem karein. Dhanyawad!</p>`
+                );
+
+                // 4. MAIL TO ADMIN (Sale Alert!)
+                const adm = activeSettings.adminEmail || "otpsender62@gmail.com";
+                dispatchEmail(
+                  adm,
+                  `🚨 [INSTANT SALE ALERT] Sold ₹${price} Code to ${currentUser.email}`,
+                  `<h3>Instant Code Sold</h3>
+                   <p><b>Item:</b> ${title}</p>
+                   <p><b>Amount Received:</b> ₹${price}</p>
+                   <p><b>Buyer:</b> ${currentUser.displayName} (${currentUser.email})</p>
+                   <p><b>Code Sold:</b> <code>${data.secretCode}</code></p>
+                   <p><b>Razorpay PayID:</b> ${response.razorpay_payment_id}</p>`
+                );
 
               } else {
                 showToast("Code already sold out ho gaya!");
@@ -537,6 +548,30 @@
             }).then(() => {
               showToast("Booking Successful! Admin jald hi aapke Gmail par mail karega.");
               location.href = "#my-vault";
+
+              // 1. Mail to User (Booking Confirmation)
+              dispatchEmail(
+                currentUser.email,
+                `[CYBERVAULT] Booking Received: ₹${amt} x ${qty} Codes`,
+                `<h3>Namaste ${currentUser.displayName},</h3>
+                 <p>Aapki booking request prapt ho gayi hai!</p>
+                 <p><b>Order:</b> ₹${amt} x ${qty} Codes (Total: ₹${total})</p>
+                 <p>Admin jald hi ise process karke aapko mail karega aur aapke My Vault me code deliver karega.</p>`
+              );
+
+              // 2. Mail to Admin (New Booking Alert!)
+              const adm = activeSettings.adminEmail || "otpsender62@gmail.com";
+              dispatchEmail(
+                adm,
+                `📦 [NEW BOOKING REQUEST] ₹${total} Paid by ${currentUser.email}`,
+                `<h3>New Custom Booking Order</h3>
+                 <p><b>Buyer:</b> ${currentUser.displayName} (${currentUser.email})</p>
+                 <p><b>Requested:</b> ₹${amt} x ${qty} Codes</p>
+                 <p><b>Total Paid:</b> ₹${total}</p>
+                 <p><b>Payment ID:</b> ${response.razorpay_payment_id}</p>
+                 <p>Admin panel kholein aur code deliver karein!</p>`
+              );
+
             });
           }
         }
@@ -670,4 +705,4 @@
     });
   </script>
 </body>
-          </html>
+  </html>
